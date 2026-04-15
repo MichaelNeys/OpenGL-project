@@ -31,7 +31,14 @@ include_directories(
 file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY textures DESTINATION ${CMAKE_BINARY_DIR})
 
-add_executable(opengl_project main.cpp src/shader.cpp src/stb_image.cpp src/camera.cpp)
+add_executable(opengl_project
+    main.cpp
+    src/shader.cpp
+    src/camera.cpp
+    src/mesh.cpp
+    src/scene.cpp
+    src/stb_image.cpp
+)
 
 # Kopieer shaders naar build directory
 file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR})
