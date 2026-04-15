@@ -53,6 +53,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libglfw3-dev libglm-dev libgl1-mesa-dev xorg-dev
 
+    - name: Install Dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        vcpkg install glm:x64-windows glfw3:x64-windows
+
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
