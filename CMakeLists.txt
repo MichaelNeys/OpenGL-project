@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.30)
 project(opengl_project)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
@@ -50,7 +52,7 @@ add_executable(opengl_project
 target_link_libraries(opengl_project 
     PRIVATE 
     GLAD 
-    glfw        # Note: FetchContent uses 'glfw', not 'glfw3'
+    glfw
     OpenGL::GL
     glm::glm
 )
