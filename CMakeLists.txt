@@ -4,6 +4,16 @@ project(opengl_project)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(FetchContent)
+
+FetchContent_Declare(
+  glm
+  GIT_REPOSITORY https://github.com/g-truc/glm.git
+  GIT_TAG        0.9.9.8  # Using a stable tag is safer than 'master'
+)
+
+FetchContent_MakeAvailable(glm)
+
 # 1. Find Packages
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
