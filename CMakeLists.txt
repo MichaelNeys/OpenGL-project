@@ -6,25 +6,37 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
+# --- 1. Fetch GLM ---
 FetchContent_Declare(
   glm
   GIT_REPOSITORY https://github.com/g-truc/glm.git
-  GIT_TAG        0.9.9.8  # Using a stable tag is safer than 'master'
+  GIT_TAG        0.9.9.8
 )
-
 FetchContent_MakeAvailable(glm)
 
-# 1. Find Packages
-find_package(OpenGL REQUIRED)
-# find_package(glm REQUIRED)
-find_package(glfw3 REQUIRED)
+# --- 2. Fetch GLFW ---
+FetchContent_Declare(
+  glfw
+  GIT_REPOSITORY https://github.com/glfw/glfw.git
+  GIT_TAG        3.3.8
+)
+# Disable building GLFW tests and docs to save time
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
-# 2. GLAD Library
-# It's better to define GLAD as a static library
+FetchContent_MakeAvailable(glfw)
+
+# --- 3. Find System Packages ---
+find_package(OpenGL REQUIRED)
+# Note: find_package(glm) and find_package(glfw3) are REMOVED because we fetched them above
+
+# --- 4. GLAD Library ---
 add_library(GLAD STATIC glad.c)
 target_include_directories(GLAD PUBLIC ${CMAKE_SOURCE_DIR}/includes ${CMAKE_SOURCE_DIR}/headers)
 
-# 3. Main Executable
+# --- 5. Main Executable ---
 add_executable(opengl_project
     main.cpp
     src/shader.cpp
@@ -34,26 +46,26 @@ add_executable(opengl_project
     src/stb_image.cpp
 )
 
-# 4. Link Libraries (The "Modern" Way)
+# --- 6. Link Libraries ---
 target_link_libraries(opengl_project 
     PRIVATE 
     GLAD 
-    glfw 
+    glfw        # Note: FetchContent uses 'glfw', not 'glfw3'
     OpenGL::GL
     glm::glm
 )
 
-# 5. Handle the 'dl' library for Linux only
+# 7. Handle the 'dl' library for Linux only
 if(UNIX AND NOT APPLE)
     target_link_libraries(opengl_project PRIVATE dl)
 endif()
 
-# 6. Include headers for the main project
+# 8. Include headers for the main project
 target_include_directories(opengl_project PRIVATE 
     ${CMAKE_SOURCE_DIR}/includes 
     ${CMAKE_SOURCE_DIR}/headers
 )
 
-# 7. Copy Assets to Build Directory
+# 9. Copy Assets to Build Directory
 file(COPY shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY textures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
