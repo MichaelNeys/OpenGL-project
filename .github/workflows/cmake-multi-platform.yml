@@ -53,12 +53,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libglfw3-dev libglm-dev libgl1-mesa-dev xorg-dev
 
+    - name: Install Dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: vcpkg install glm:x64-windows glfw3:x64-windows
+
+    
     - name: Set reusable strings
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        # Create a variable that points to vcpkg only on Windows
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          echo "vcpkg_toolchain=-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> "$GITHUB_OUTPUT"
+        else
+          echo "vcpkg_toolchain=" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
