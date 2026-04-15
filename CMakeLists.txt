@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 1. Find Packages
 find_package(OpenGL REQUIRED)
-find_package(glm CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
+find_package(glm REQUIRED)
+find_package(glfw3 REQUIRED)
 
 # 2. GLAD Library
 # It's better to define GLAD as a static library
