@@ -1,4 +1,0 @@
-/home/max/Documents/BA_2/Code/CG&VC/cg-vc-project/Code/build/CMakeFiles/GLAD.dir
-/home/max/Documents/BA_2/Code/CG&VC/cg-vc-project/Code/build/CMakeFiles/opengl_project.dir
-/home/max/Documents/BA_2/Code/CG&VC/cg-vc-project/Code/build/CMakeFiles/edit_cache.dir
-/home/max/Documents/BA_2/Code/CG&VC/cg-vc-project/Code/build/CMakeFiles/rebuild_cache.dir
