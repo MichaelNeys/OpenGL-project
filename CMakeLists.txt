@@ -2,35 +2,19 @@ cmake_minimum_required(VERSION 3.24)
 project(opengl_project)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-link_directories(${CMAKE_SOURCE_DIR}/lib)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
-
+# 1. Find Packages
 find_package(OpenGL REQUIRED)
+find_package(glm REQUIRED)
+find_package(glfw3 REQUIRED)
 
-# find the required packages
-find_package(GLM REQUIRED)
-message(STATUS "GLM included at ${GLM_INCLUDE_DIR}")
-find_package(GLFW3 REQUIRED)
-message(STATUS "Found GLFW3 in ${GLFW3_INCLUDE_DIR}")
+# 2. GLAD Library
+# It's better to define GLAD as a static library
+add_library(GLAD STATIC glad.c)
+target_include_directories(GLAD PUBLIC ${CMAKE_SOURCE_DIR}/includes ${CMAKE_SOURCE_DIR}/headers)
 
-# Vervang "opengl32" door de generieke variabele die CMake zelf vindt
-# "glfw" (of glfw3) verwijst naar je pacman installatie
-# "dl" is nodig voor GLAD op Linux
-set(LIBS glfw ${OPENGL_LIBRARIES} dl)
-
-add_library(GLAD "glad.c")
-set(LIBS ${LIBS} GLAD)
-
-include_directories(
-    ${CMAKE_SOURCE_DIR}/includes
-    ${CMAKE_SOURCE_DIR}/headers
-)
-
-file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR})
-file(COPY textures DESTINATION ${CMAKE_BINARY_DIR})
-
+# 3. Main Executable
 add_executable(opengl_project
     main.cpp
     src/shader.cpp
@@ -40,6 +24,26 @@ add_executable(opengl_project
     src/stb_image.cpp
 )
 
-# Kopieer shaders naar build directory
-file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR})
-target_link_libraries(opengl_project ${LIBS})
+# 4. Link Libraries (The "Modern" Way)
+target_link_libraries(opengl_project 
+    PRIVATE 
+    GLAD 
+    glfw 
+    OpenGL::GL
+    glm::glm
+)
+
+# 5. Handle the 'dl' library for Linux only
+if(UNIX AND NOT APPLE)
+    target_link_libraries(opengl_project PRIVATE dl)
+endif()
+
+# 6. Include headers for the main project
+target_include_directories(opengl_project PRIVATE 
+    ${CMAKE_SOURCE_DIR}/includes 
+    ${CMAKE_SOURCE_DIR}/headers
+)
+
+# 7. Copy Assets to Build Directory
+file(COPY shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY textures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
