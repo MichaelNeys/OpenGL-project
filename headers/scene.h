@@ -22,6 +22,10 @@ private:
     void loadTexture();
     void setMaterialUniforms(Shader& shader);
     void setLightUniforms(Shader& shader);
+
+    unsigned int bezierVAO;
+    unsigned int bezierVBO;
+    unsigned int bezierPointCount;
 };
 
 #endif

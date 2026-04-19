@@ -3,6 +3,24 @@
 #include <stb_image.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <vector>
+
+static glm::vec3 calculateBezierPoint(float t, const std::vector<glm::vec3>& controlPoints) {
+    if (controlPoints.empty()) return glm::vec3(0.0f);
+    if (controlPoints.size() == 1) return controlPoints[0];
+
+    std::vector<glm::vec3> temp = controlPoints;
+    int n = temp.size() - 1;
+
+    // Casteljau's iteratie
+    for (int k = 1; k <= n; k++) {
+        for (int i = 0; i <= n - k; i++) {
+            temp[i] = (1.0f - t) * temp[i] + t * temp[i + 1];
+        }
+    }
+
+    return temp[0];
+}
 
 static float cubeVertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -53,6 +71,39 @@ Scene::Scene() : lightPos(1.2f, 1.0f, 2.0f) {
     cubeMesh = new Mesh(cubeVertices, vertexCount, true);
     lampMesh  = new Mesh(cubeVertices, vertexCount, true);
     loadTexture();
+
+    std::vector<glm::vec3> bezierPoints;
+    int numSegments = 100;
+    bezierPointCount = numSegments + 1;
+
+    std::vector<glm::vec3> controlPoints = {
+        glm::vec3(-30.0f,  0.0f, -3.0f), // Start (P0)
+        glm::vec3(-1.0f,   4.0f, -1.0f), // P1
+        glm::vec3( 1.0f,  -4.0f,  1.0f), // P2
+        glm::vec3( 3.0f,   0.0f,  3.0f), // P3
+        // glm::vec3( 30.0f, 10.0f, 30.0f)  // P4 (ez toe te voege nu)
+    };
+
+    // create vertices voor curve
+    for (int i = 0; i <= numSegments; i++) {
+        float t = (float)i / (float)numSegments;
+        bezierPoints.push_back(calculateBezierPoint(t, controlPoints));
+    }
+
+    // create OpenGL buffers voor curve
+    glGenVertexArrays(1, &bezierVAO);
+    glGenBuffers(1, &bezierVBO);
+
+    // aan GPU geve
+    glBindVertexArray(bezierVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, bezierVBO);
+    glBufferData(GL_ARRAY_BUFFER, bezierPoints.size() * sizeof(glm::vec3), bezierPoints.data(), GL_STATIC_DRAW);
+
+    // enkel x,y,z nodig voor curve
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
 }
 
 void Scene::loadTexture() {
@@ -113,6 +164,16 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
     lampShader.setMat4("view",       view);
     lampShader.setMat4("projection", projection);
     lampMesh->Draw();
+
+    // --- bezier curve ---
+    lampShader.use(); 
+    lampShader.setMat4("model", glm::mat4(1.0f));
+    lampShader.setMat4("view", view);
+    lampShader.setMat4("projection", projection);
+
+    glBindVertexArray(bezierVAO);
+    glDrawArrays(GL_LINE_STRIP, 0, bezierPointCount); 
+    glBindVertexArray(0);
 }
 
 void Scene::Delete() {
@@ -121,4 +182,6 @@ void Scene::Delete() {
     delete cubeMesh;
     delete lampMesh;
     glDeleteTextures(1, &texture);
+    glDeleteVertexArrays(1, &bezierVAO);
+    glDeleteBuffers(1, &bezierVBO);
 }
