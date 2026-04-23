@@ -1,9 +1,10 @@
 // src/scene.cpp
 #include "scene.h"
-#include <stb_image.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <vector>
+#include <filesystem>
+#include <unordered_set>
 
 static glm::vec3 calculateBezierPoint(float t, const std::vector<glm::vec3>& controlPoints) {
     if (controlPoints.empty()) return glm::vec3(0.0f);
@@ -68,9 +69,7 @@ static float cubeVertices[] = {
 
 Scene::Scene() : lightPos(1.2f, 1.0f, 2.0f) {
     unsigned int vertexCount = sizeof(cubeVertices) / sizeof(float);
-    cubeMesh = new Mesh(cubeVertices, vertexCount, true);
     lampMesh  = new Mesh(cubeVertices, vertexCount, true);
-    loadTexture();
 
     std::vector<glm::vec3> bezierPoints;
     int numSegments = 100;
@@ -104,33 +103,56 @@ Scene::Scene() : lightPos(1.2f, 1.0f, 2.0f) {
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
-}
 
-void Scene::loadTexture() {
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load all exported Atomium mesh parts if present.
+    std::vector<std::string> atomiumBases = {
+        "models/Atomium",   // works when launched from build dir with copied assets
+        "../models/Atomium" // works when launched from build dir without copied assets
+    };
+    const std::unordered_set<std::string> sphereFiles = {
+        "model_1.obj",
+        "model_2.obj",
+        "model_4.obj",
+        "model_5.obj",
+        "model_6.obj",
+        "model_11.obj",
+        "model_14.obj",
+        "model_15.obj"
+    };
 
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "ERROR: Texture niet gevonden" << std::endl;
+    for (const std::string& base : atomiumBases) {
+        bool foundAny = false;
+        for (int i = 0; i < 64; ++i) {
+            const std::string path = base + "/model_" + std::to_string(i) + ".obj";
+            if (!std::filesystem::exists(std::filesystem::path(path))) {
+                if (i > 0) {
+                    break;
+                }
+                continue;
+            }
+            Model* loadedModel = new Model(path);
+            const std::string fileName = std::filesystem::path(path).filename().string();
+            const bool isSphere = sphereFiles.find(fileName) != sphereFiles.end();
+            atomiumParts.push_back({loadedModel, isSphere, path});
+            foundAny = true;
+        }
+        if (foundAny) {
+            break;
+        }
     }
-    stbi_image_free(data);
-}
-
-void Scene::setMaterialUniforms(Shader& shader) {
-    shader.setVec3("material.ambient",   glm::vec3(0.24725f,  0.1995f,   0.0745f));
-    shader.setVec3("material.diffuse",   glm::vec3(0.75164f,  0.60648f,  0.22648f));
-    shader.setVec3("material.specular",  glm::vec3(0.628281f, 0.555802f, 0.366065f));
-    shader.setFloat("material.shininess", 51.2f);
+    if (atomiumParts.empty()) {
+        std::cerr << "Geen Atomium OBJ-bestanden gevonden in models/Atomium" << std::endl;
+    } else {
+        std::cout << "Atomium delen geladen: " << atomiumParts.size() << std::endl;
+        for (size_t i = 0; i < atomiumParts.size(); ++i) {
+            std::cout
+                << "  [" << i << "] "
+                << atomiumParts[i].filePath
+                << " -> "
+                << (atomiumParts[i].isSphere ? "SPHERE" : "BAR")
+                << std::endl;
+        }
+    }
 }
 
 void Scene::setLightUniforms(Shader& shader) {
@@ -144,18 +166,35 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
                  glm::mat4& view, glm::mat4& projection,
                  glm::vec3& cameraPos) {
 
-    // --- kubus ---
     lightingShader.use();
-    setMaterialUniforms(lightingShader);
     setLightUniforms(lightingShader);
     lightingShader.setVec3("viewPos", cameraPos);
-    lightingShader.setMat4("model", glm::mat4(1.0f));
     lightingShader.setMat4("view", view);
     lightingShader.setMat4("projection", projection);
+    lightingShader.setBool("hasDiffuseTexture", false);
+    lightingShader.setInt("texture_diffuse1", 0);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    cubeMesh->Draw();
+    // --- atomium model ---
+    glm::mat4 atomiumModel = glm::mat4(1.0f);
+    atomiumModel = glm::translate(atomiumModel, glm::vec3(0.0f, -0.5f, -4.0f));
+    atomiumModel = glm::scale(atomiumModel, glm::vec3(0.35f));
+    lightingShader.setMat4("model", atomiumModel);
+    for (const AtomiumPart& part : atomiumParts) {
+        if (part.isSphere) {
+            // Shiny aluminum-like spheres.
+            lightingShader.setVec3("material.ambient",  glm::vec3(0.30f, 0.30f, 0.32f));
+            lightingShader.setVec3("material.diffuse",  glm::vec3(0.92f, 0.92f, 0.95f));
+            lightingShader.setVec3("material.specular", glm::vec3(0.95f, 0.95f, 0.98f));
+            lightingShader.setFloat("material.shininess", 140.0f);
+        } else {
+            // Matte white/gray bars.
+            lightingShader.setVec3("material.ambient",  glm::vec3(0.24f, 0.24f, 0.24f));
+            lightingShader.setVec3("material.diffuse",  glm::vec3(0.90f, 0.90f, 0.90f));
+            lightingShader.setVec3("material.specular", glm::vec3(0.04f, 0.04f, 0.04f));
+            lightingShader.setFloat("material.shininess", 10.0f);
+        }
+        part.model->Draw(lightingShader);
+    }
 
     // --- lamp ---
     lampShader.use();
@@ -177,11 +216,13 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
 }
 
 void Scene::Delete() {
-    cubeMesh->Delete();
     lampMesh->Delete();
-    delete cubeMesh;
     delete lampMesh;
-    glDeleteTextures(1, &texture);
     glDeleteVertexArrays(1, &bezierVAO);
     glDeleteBuffers(1, &bezierVBO);
+    for (const AtomiumPart& part : atomiumParts) {
+        part.model->Delete();
+        delete part.model;
+    }
+    atomiumParts.clear();
 }

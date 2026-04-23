@@ -5,6 +5,9 @@
 #include <glm/glm.hpp>
 #include <shader.h>
 #include <mesh.h>
+#include <model.h>
+#include <vector>
+#include <string>
 
 class Scene {
 public:
@@ -15,17 +18,21 @@ public:
     void Delete();
 
 private:
-    Mesh* cubeMesh;
-    Mesh* lampMesh;
-    unsigned int texture;
+    struct AtomiumPart {
+        Model* model;
+        bool isSphere;
+        std::string filePath;
+    };
 
-    void loadTexture();
-    void setMaterialUniforms(Shader& shader);
+    Mesh* lampMesh;
+
     void setLightUniforms(Shader& shader);
 
     unsigned int bezierVAO;
     unsigned int bezierVBO;
     unsigned int bezierPointCount;
+
+    std::vector<AtomiumPart> atomiumParts;
 };
 
 #endif
