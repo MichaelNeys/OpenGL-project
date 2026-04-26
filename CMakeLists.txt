@@ -30,12 +30,32 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(glfw)
 
-# --- 3. Find System Packages ---
+# --- 3. Fetch Assimp ---
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_MINIZIP ON CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  assimp
+  GIT_REPOSITORY https://github.com/assimp/assimp.git
+  GIT_TAG        v5.4.3
+)
+FetchContent_MakeAvailable(assimp)
+if(TARGET assimp)
+  target_include_directories(assimp PRIVATE
+    ${assimp_SOURCE_DIR}/contrib/zlib/contrib/minizip
+  )
+  target_sources(assimp PRIVATE
+    ${assimp_SOURCE_DIR}/contrib/zlib/contrib/minizip/ioapi.c
+    ${assimp_SOURCE_DIR}/contrib/zlib/contrib/minizip/unzip.c
+  )
+endif()
+
+# --- 4. Find System Packages ---
 find_package(OpenGL REQUIRED)
 # Note: find_package(glm) and find_package(glfw3) are REMOVED because we fetched them above
-
-# --- 4. Assimp ---
-find_package(assimp REQUIRED)
 
 # --- 5. GLAD Library ---
 add_library(GLAD STATIC glad.c)
