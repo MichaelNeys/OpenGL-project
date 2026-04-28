@@ -1,5 +1,10 @@
 #include "model.h"
 #include <filesystem>
+#include <unordered_map>
+
+namespace {
+std::unordered_map<std::string, unsigned int> gTextureCache;
+}
 
 void Model::Draw(Shader& shader) {
     for (auto& mesh : meshes)
@@ -14,7 +19,7 @@ void Model::Delete() {
 void Model::loadModel(const std::string& path) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
-        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        aiProcess_Triangulate | aiProcess_FlipUVs);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "Assimp fout: " << importer.GetErrorString() << std::endl;
@@ -86,7 +91,13 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
             }
 
             Mesh::Texture tex;
-            tex.id = textureFromFile(fullPath);
+            const auto cached = gTextureCache.find(fullPath);
+            if (cached != gTextureCache.end()) {
+                tex.id = cached->second;
+            } else {
+                tex.id = textureFromFile(fullPath);
+                gTextureCache[fullPath] = tex.id;
+            }
             tex.type = typeName;
             tex.path = fullPath;
             textures.push_back(tex);
@@ -104,15 +115,22 @@ std::vector<Mesh::Texture> Model::loadMaterialTextures(
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
         aiString str;
         mat->GetTexture(type, i, &str);
+        const std::string fullPath = directory + "/" + str.C_Str();
         // check cache
         bool skip = false;
         for (auto& t : textures_loaded)
-            if (t.path == str.C_Str()) { textures.push_back(t); skip = true; break; }
+            if (t.path == fullPath) { textures.push_back(t); skip = true; break; }
         if (!skip) {
             Mesh::Texture tex;
-            tex.id   = textureFromFile(directory + "/" + str.C_Str());
+            const auto cached = gTextureCache.find(fullPath);
+            if (cached != gTextureCache.end()) {
+                tex.id = cached->second;
+            } else {
+                tex.id = textureFromFile(fullPath);
+                gTextureCache[fullPath] = tex.id;
+            }
             tex.type = typeName;
-            tex.path = str.C_Str();
+            tex.path = fullPath;
             textures.push_back(tex);
             textures_loaded.push_back(tex);
         }

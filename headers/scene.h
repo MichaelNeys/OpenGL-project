@@ -8,6 +8,7 @@
 #include <model.h>
 #include <vector>
 #include <string>
+#include <deque>
 
 class Scene {
 public:
@@ -23,6 +24,10 @@ private:
         bool isSphere;
         std::string filePath;
     };
+    struct DronePart {
+        Model* model;
+        std::string filePath;
+    };
 
     Mesh* lampMesh;
 
@@ -33,6 +38,8 @@ private:
     unsigned int bezierPointCount;
 
     std::vector<AtomiumPart> atomiumParts;
+    std::vector<DronePart> droneParts;
+    std::deque<std::string> pendingDronePaths;
 };
 
 #endif

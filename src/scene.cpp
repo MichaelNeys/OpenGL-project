@@ -5,6 +5,13 @@
 #include <vector>
 #include <filesystem>
 #include <unordered_set>
+#include <algorithm>
+
+namespace {
+constexpr std::size_t kInitialDronePartsToLoad = 3;
+constexpr std::size_t kMaxDronePartsToLoad = 18;
+constexpr std::size_t kDronePartsLoadedPerFrame = 1;
+}
 
 static glm::vec3 calculateBezierPoint(float t, const std::vector<glm::vec3>& controlPoints) {
     if (controlPoints.empty()) return glm::vec3(0.0f);
@@ -106,8 +113,8 @@ Scene::Scene() : lightPos(1.2f, 1.0f, 2.0f) {
 
     // Load all exported Atomium mesh parts if present.
     std::vector<std::string> atomiumBases = {
-        "models/Atomium",   // works when launched from build dir with copied assets
-        "../models/Atomium" // works when launched from build dir without copied assets
+        "models/Atomium",
+        "../models/Atomium"
     };
     const std::unordered_set<std::string> sphereFiles = {
         "model_1.obj",
@@ -153,6 +160,58 @@ Scene::Scene() : lightPos(1.2f, 1.0f, 2.0f) {
                 << std::endl;
         }
     }
+
+    // Load all exported Drone mesh parts if present.
+    std::vector<std::string> droneBases = {
+        "models/Drone",
+        "../models/Drone"
+    };
+    struct DroneCandidate {
+        std::string path;
+        std::uintmax_t sizeBytes;
+    };
+    std::vector<DroneCandidate> droneCandidates;
+    for (const std::string& base : droneBases) {
+        for (int i = 0; i < 256; ++i) {
+            const std::string path = base + "/model_" + std::to_string(i) + ".obj";
+            const std::filesystem::path fsPath(path);
+            if (!std::filesystem::exists(fsPath)) {
+                if (i > 0) {
+                    break;
+                }
+                continue;
+            }
+
+            std::error_code fileSizeError;
+            const std::uintmax_t fileSize = std::filesystem::file_size(fsPath, fileSizeError);
+            droneCandidates.push_back({path, fileSizeError ? 0 : fileSize});
+        }
+        if (!droneCandidates.empty()) {
+            break;
+        }
+    }
+
+    std::sort(droneCandidates.begin(), droneCandidates.end(),
+        [](const DroneCandidate& a, const DroneCandidate& b) {
+            return a.sizeBytes > b.sizeBytes;
+        });
+
+    const std::size_t initialParts = std::min(kInitialDronePartsToLoad, droneCandidates.size());
+    const std::size_t maxParts = std::min(kMaxDronePartsToLoad, droneCandidates.size());
+    for (std::size_t i = 0; i < initialParts; ++i) {
+        Model* loadedModel = new Model(droneCandidates[i].path);
+        droneParts.push_back({loadedModel, droneCandidates[i].path});
+    }
+    for (std::size_t i = initialParts; i < maxParts; ++i) {
+        pendingDronePaths.push_back(droneCandidates[i].path);
+    }
+    if (droneParts.empty()) {
+        std::cerr << "Geen Drone OBJ-bestanden gevonden in models/Drone" << std::endl;
+    } else {
+        std::cout << "Drone direct geladen: " << droneParts.size() << std::endl;
+        std::cout << "Drone in wachtrij: " << pendingDronePaths.size() << std::endl;
+        std::cout << "Drone bronbestanden gevonden: " << droneCandidates.size() << std::endl;
+    }
 }
 
 void Scene::setLightUniforms(Shader& shader) {
@@ -165,6 +224,12 @@ void Scene::setLightUniforms(Shader& shader) {
 void Scene::Draw(Shader& lightingShader, Shader& lampShader,
                  glm::mat4& view, glm::mat4& projection,
                  glm::vec3& cameraPos) {
+    for (std::size_t i = 0; i < kDronePartsLoadedPerFrame && !pendingDronePaths.empty(); ++i) {
+        const std::string nextPath = pendingDronePaths.front();
+        pendingDronePaths.pop_front();
+        Model* loadedModel = new Model(nextPath);
+        droneParts.push_back({loadedModel, nextPath});
+    }
 
     lightingShader.use();
     setLightUniforms(lightingShader);
@@ -193,6 +258,19 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
             lightingShader.setVec3("material.specular", glm::vec3(0.04f, 0.04f, 0.04f));
             lightingShader.setFloat("material.shininess", 10.0f);
         }
+        part.model->Draw(lightingShader);
+    }
+
+    // --- drone model ---
+    glm::mat4 droneModel = glm::mat4(1.0f);
+    droneModel = glm::translate(droneModel, glm::vec3(1.0f, 1.8f, -3.0f));
+    droneModel = glm::scale(droneModel, glm::vec3(0.03f));
+    lightingShader.setMat4("model", droneModel);
+    lightingShader.setVec3("material.ambient",  glm::vec3(0.10f, 0.10f, 0.10f));
+    lightingShader.setVec3("material.diffuse",  glm::vec3(0.35f, 0.35f, 0.38f));
+    lightingShader.setVec3("material.specular", glm::vec3(0.45f, 0.45f, 0.48f));
+    lightingShader.setFloat("material.shininess", 40.0f);
+    for (const DronePart& part : droneParts) {
         part.model->Draw(lightingShader);
     }
 
@@ -225,4 +303,9 @@ void Scene::Delete() {
         delete part.model;
     }
     atomiumParts.clear();
+    for (const DronePart& part : droneParts) {
+        part.model->Delete();
+        delete part.model;
+    }
+    droneParts.clear();
 }
