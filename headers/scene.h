@@ -5,6 +5,10 @@
 #include <glm/glm.hpp>
 #include <shader.h>
 #include <mesh.h>
+#include <model.h>
+#include <vector>
+#include <string>
+#include <deque>
 
 class Scene {
 public:
@@ -15,17 +19,16 @@ public:
     void Delete();
 
 private:
-    Mesh* cubeMesh;
     Mesh* lampMesh;
-    unsigned int texture;
-
-    void loadTexture();
-    void setMaterialUniforms(Shader& shader);
     void setLightUniforms(Shader& shader);
 
     unsigned int bezierVAO;
     unsigned int bezierVBO;
     unsigned int bezierPointCount;
+
+    Model* Village = nullptr;
+    unsigned int VillageTexture = 0;
+    Model* Elytra;
 };
 
 #endif

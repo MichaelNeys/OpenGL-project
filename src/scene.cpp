@@ -1,9 +1,11 @@
 // src/scene.cpp
 #include "scene.h"
-#include <stb_image.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <vector>
+#include <filesystem>
+#include <unordered_set>
+#include <algorithm>
 
 static glm::vec3 calculateBezierPoint(float t, const std::vector<glm::vec3>& controlPoints) {
     if (controlPoints.empty()) return glm::vec3(0.0f);
@@ -66,11 +68,9 @@ static float cubeVertices[] = {
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
 
-Scene::Scene() : lightPos(1.2f, 1.0f, 2.0f) {
+Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
     unsigned int vertexCount = sizeof(cubeVertices) / sizeof(float);
-    cubeMesh = new Mesh(cubeVertices, vertexCount, true);
     lampMesh  = new Mesh(cubeVertices, vertexCount, true);
-    loadTexture();
 
     std::vector<glm::vec3> bezierPoints;
     int numSegments = 100;
@@ -104,58 +104,98 @@ Scene::Scene() : lightPos(1.2f, 1.0f, 2.0f) {
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
-}
 
-void Scene::loadTexture() {
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load exported Mincraft village mesh parts if present.
+    std::string VillageBase = "";
+    std::vector<std::string> VillageBases = {
+        "models/Minecraft ville",
+        "../models/Minecraft ville"
+    };
 
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "ERROR: Texture niet gevonden" << std::endl;
+    for (const std::string& base : VillageBases) {
+        const std::string path = base + "/minecraft_ville.glb";
+        if (std::filesystem::exists(path)) {
+            VillageBase = path;
+            break;
+        }
     }
-    stbi_image_free(data);
-}
 
-void Scene::setMaterialUniforms(Shader& shader) {
-    shader.setVec3("material.ambient",   glm::vec3(0.24725f,  0.1995f,   0.0745f));
-    shader.setVec3("material.diffuse",   glm::vec3(0.75164f,  0.60648f,  0.22648f));
-    shader.setVec3("material.specular",  glm::vec3(0.628281f, 0.555802f, 0.366065f));
-    shader.setFloat("material.shininess", 51.2f);
+    if (!VillageBase.empty()) {
+        Village = new Model(VillageBase);
+        std::cout << "Village geladen: " << VillageBase << std::endl;
+    } else {
+        Elytra = nullptr;
+        std::cerr << "Village model niet gevonden!" << std::endl;
+    }
+
+    // Load all exported Elytra mesh parts if present.
+    std::string ElytraPath = "";
+    std::vector<std::string> ElytraBases = {
+        "models/Bee-1",
+        "../models/Bee-1"
+    };
+
+    for (const std::string& base : ElytraBases) {
+        const std::string path = base + "/minecraft_bee.glb";
+        if (std::filesystem::exists(path)) {
+            ElytraPath = path;
+            break;
+        }
+    }
+
+    if (!ElytraPath.empty()) {
+        Elytra = new Model(ElytraPath);
+        std::cout << "Elytra geladen: " << ElytraPath << std::endl;
+    } else {
+        Elytra = nullptr;
+        std::cerr << "Elytra model niet gevonden!" << std::endl;
+    }
 }
 
 void Scene::setLightUniforms(Shader& shader) {
     shader.setVec3("light.position", lightPos);
-    shader.setVec3("light.ambient",  glm::vec3(0.3f,  0.24f, 0.14f));
-    shader.setVec3("light.diffuse",  glm::vec3(0.7f,  0.6f,  0.3f));
-    shader.setVec3("light.specular", glm::vec3(1.0f,  0.9f,  0.7f));
+    shader.setVec3("light.ambient",  glm::vec3(0.8f, 0.8f, 0.8f));
+    shader.setVec3("light.diffuse",  glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.setVec3("light.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 }
 
 void Scene::Draw(Shader& lightingShader, Shader& lampShader,
                  glm::mat4& view, glm::mat4& projection,
                  glm::vec3& cameraPos) {
-
-    // --- kubus ---
     lightingShader.use();
-    setMaterialUniforms(lightingShader);
     setLightUniforms(lightingShader);
     lightingShader.setVec3("viewPos", cameraPos);
-    lightingShader.setMat4("model", glm::mat4(1.0f));
     lightingShader.setMat4("view", view);
     lightingShader.setMat4("projection", projection);
+    lightingShader.setBool("hasDiffuseTexture", false);
+    lightingShader.setInt("texture_diffuse1", 0);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    cubeMesh->Draw();
+    // --- Minecraft village ---
+    if (Village != nullptr) {
+        glm::mat4 VillageModel = glm::mat4(1.0f);
+        VillageModel = glm::translate(VillageModel, glm::vec3(0.0f, 0.0f, -10.0f));
+        VillageModel = glm::rotate(VillageModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        VillageModel = glm::scale(VillageModel, glm::vec3(1.0f));
+        lightingShader.setMat4("model", VillageModel);
+        lightingShader.setVec3("material.ambient",  glm::vec3(0.8f, 0.8f, 0.8f));
+        lightingShader.setVec3("material.diffuse",  glm::vec3(0.8f, 0.8f, 0.8f));
+        lightingShader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
+        lightingShader.setFloat("material.shininess", 10.0f);
+        Village->Draw(lightingShader);
+    }
+
+    // --- Elytra model ---
+    if (Elytra != nullptr) {
+        glm::mat4 ElytraModel = glm::mat4(1.0f);
+        ElytraModel = glm::translate(ElytraModel, glm::vec3(1.0f, 1.8f, -3.0f));
+        ElytraModel = glm::scale(ElytraModel, glm::vec3(0.01f));
+        lightingShader.setMat4("model", ElytraModel);
+        lightingShader.setVec3("material.ambient",  glm::vec3(0.10f, 0.10f, 0.10f));
+        lightingShader.setVec3("material.diffuse",  glm::vec3(0.35f, 0.35f, 0.38f));
+        lightingShader.setVec3("material.specular", glm::vec3(0.45f, 0.45f, 0.48f));
+        lightingShader.setFloat("material.shininess", 40.0f);
+        Elytra->Draw(lightingShader);
+    }
 
     // --- lamp ---
     lampShader.use();
@@ -177,11 +217,16 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
 }
 
 void Scene::Delete() {
-    cubeMesh->Delete();
     lampMesh->Delete();
-    delete cubeMesh;
     delete lampMesh;
-    glDeleteTextures(1, &texture);
     glDeleteVertexArrays(1, &bezierVAO);
     glDeleteBuffers(1, &bezierVBO);
+    if (Village != nullptr) {
+        Village->Delete();
+        delete Village;
+    }
+    if (Elytra != nullptr) {
+        Elytra->Delete();
+        delete Elytra;
+    }
 }

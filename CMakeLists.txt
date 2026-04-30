@@ -30,31 +30,56 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(glfw)
 
-# --- 3. Find System Packages ---
+# --- 3. Fetch Assimp ---
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_MINIZIP ON CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  assimp
+  GIT_REPOSITORY https://github.com/assimp/assimp.git
+  GIT_TAG        v5.4.3
+)
+FetchContent_MakeAvailable(assimp)
+if(TARGET assimp)
+  target_include_directories(assimp PRIVATE
+    ${assimp_SOURCE_DIR}/contrib/zlib/contrib/minizip
+  )
+  target_sources(assimp PRIVATE
+    ${assimp_SOURCE_DIR}/contrib/zlib/contrib/minizip/ioapi.c
+    ${assimp_SOURCE_DIR}/contrib/zlib/contrib/minizip/unzip.c
+  )
+endif()
+
+# --- 4. Find System Packages ---
 find_package(OpenGL REQUIRED)
 # Note: find_package(glm) and find_package(glfw3) are REMOVED because we fetched them above
 
-# --- 4. GLAD Library ---
+# --- 5. GLAD Library ---
 add_library(GLAD STATIC glad.c)
 target_include_directories(GLAD PUBLIC ${CMAKE_SOURCE_DIR}/includes ${CMAKE_SOURCE_DIR}/headers)
 
-# --- 5. Main Executable ---
+# --- 6. Main Executable ---
 add_executable(opengl_project
     main.cpp
     src/shader.cpp
     src/camera.cpp
     src/mesh.cpp
+    src/model.cpp
     src/scene.cpp
     src/stb_image.cpp
 )
 
-# --- 6. Link Libraries ---
+# --- 7. Link Libraries ---
 target_link_libraries(opengl_project 
     PRIVATE 
     GLAD 
     glfw
     OpenGL::GL
     glm::glm
+    assimp::assimp
 )
 
 # 7. Handle the 'dl' library for Linux only
@@ -71,3 +96,4 @@ target_include_directories(opengl_project PRIVATE
 # 9. Copy Assets to Build Directory
 file(COPY shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY textures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY models DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
