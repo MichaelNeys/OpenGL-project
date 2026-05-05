@@ -29,6 +29,14 @@ private:
     Model* Village = nullptr;
     unsigned int VillageTexture = 0;
     Model* Bee;
+
+    std::vector<glm::vec3> m_controlPoints;
+    std::vector<float> arcLengthLUT;
+    float totalCurveLength;
+    float currentDistance = 0.0f;
+
+    void buildLUT(int lutResolution);
+    float getTForDistance(float targetDistance);
 };
 
 #endif

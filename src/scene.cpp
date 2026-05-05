@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <unordered_set>
 #include <algorithm>
+#include <GLFW/glfw3.h>
 
 static glm::vec3 calculateBezierPoint(float t, const std::vector<glm::vec3>& controlPoints) {
     if (controlPoints.empty()) return glm::vec3(0.0f);
@@ -22,6 +23,39 @@ static glm::vec3 calculateBezierPoint(float t, const std::vector<glm::vec3>& con
     }
 
     return temp[0];
+}
+
+void Scene::buildLUT(int lutResolution) {
+    arcLengthLUT.clear();
+    arcLengthLUT.push_back(0.0f);
+
+    glm::vec3 prevPoint = calculateBezierPoint(0.0f, m_controlPoints);
+    float currentLen = 0.0f;
+
+    for (int i = 1; i <= lutResolution; i++) {
+        float t = (float)i / (float)lutResolution;
+        glm::vec3 pt = calculateBezierPoint(t, m_controlPoints);
+        currentLen += glm::length(pt - prevPoint);
+        arcLengthLUT.push_back(currentLen);
+        prevPoint = pt;
+    }
+    totalCurveLength = currentLen;
+}
+
+float Scene::getTForDistance(float targetDistance) {
+    if (targetDistance <= 0.0f) return 0.0f;
+    if (targetDistance >= totalCurveLength) return 1.0f;
+
+    for (size_t i = 0; i < arcLengthLUT.size() - 1; i++) {
+        if (targetDistance >= arcLengthLUT[i] && targetDistance <= arcLengthLUT[i+1]) {
+            float segmentLength = arcLengthLUT[i+1] - arcLengthLUT[i];
+            float segmentFraction = (targetDistance - arcLengthLUT[i]) / segmentLength;
+            float t0 = (float)i / (float)(arcLengthLUT.size() - 1);
+            float t1 = (float)(i + 1) / (float)(arcLengthLUT.size() - 1);
+            return t0 + segmentFraction * (t1 - t0);
+        }
+    }
+    return 1.0f;
 }
 
 static float cubeVertices[] = {
@@ -123,6 +157,9 @@ Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
         glm::vec3(17.0f, 1.0f, -10.0f),
         glm::vec3(15.0f,  0.0f, -10.0f),
     };
+
+    m_controlPoints = controlPoints;
+    buildLUT(1000);
 
     // create vertices voor curve
     for (int i = 0; i <= numSegments; i++) {
@@ -228,9 +265,40 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
 
     // --- Bee model ---
     if (Bee != nullptr) {
+        // tijd en snelheid
+        static float lastTime = glfwGetTime();
+        float currentTime = glfwGetTime();
+        float deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+
+        float speed = 0.8f;
+        currentDistance += speed * deltaTime;
+
+        // loop
+        if (currentDistance > totalCurveLength) {
+            currentDistance = fmod(currentDistance, totalCurveLength);
+        }
+
+        float t = getTForDistance(currentDistance);
+        
+        glm::vec3 beePos = calculateBezierPoint(t, m_controlPoints);
+
+        float tNext = getTForDistance(currentDistance + 0.1f); 
+        if (tNext < t) tNext = 1.0f;
+        glm::vec3 nextPos = calculateBezierPoint(tNext, m_controlPoints);
+        glm::vec3 direction = glm::normalize(nextPos - beePos);
+        
+        float yaw = atan2(direction.x, direction.z) + glm::radians(180.0f);
+
+        float xzLength = sqrt(direction.x * direction.x + direction.z * direction.z); 
+        float pitch = atan2(direction.y, xzLength);
+
         glm::mat4 BeeModel = glm::mat4(1.0f);
-        BeeModel = glm::translate(BeeModel, glm::vec3(1.0f, 1.8f, -3.0f));
+        BeeModel = glm::translate(BeeModel, beePos);
+        BeeModel = glm::rotate(BeeModel, yaw, glm::vec3(0.0f, 1.0f, 0.0f));   
+        BeeModel = glm::rotate(BeeModel, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
         BeeModel = glm::scale(BeeModel, glm::vec3(0.01f));
+
         lightingShader.setMat4("model", BeeModel);
         lightingShader.setVec3("material.ambient",  glm::vec3(0.10f, 0.10f, 0.10f));
         lightingShader.setVec3("material.diffuse",  glm::vec3(0.35f, 0.35f, 0.38f));
