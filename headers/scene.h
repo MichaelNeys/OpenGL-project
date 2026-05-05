@@ -28,7 +28,7 @@ private:
 
     Model* Village = nullptr;
     unsigned int VillageTexture = 0;
-    Model* Elytra;
+    Model* Bee;
 };
 
 #endif

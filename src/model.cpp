@@ -65,45 +65,6 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
         textures.insert(textures.end(), norm.begin(), norm.end());
     }
 
-    // Fallback when OBJ has no .mtl (or no referenced textures).
-    if (textures.empty()) {
-        const std::vector<std::pair<std::string, std::string>> fallbackFiles = {
-            {"Concrete_016_baseColor.png", "texture_diffuse"},
-            {"Concrete_016_normal.png", "texture_normal"}
-        };
-        for (const auto& [filename, typeName] : fallbackFiles) {
-            const std::string fullPath = directory + "/" + filename;
-            if (!std::filesystem::exists(std::filesystem::path(fullPath))) {
-                continue;
-            }
-
-            bool alreadyLoaded = false;
-            for (const auto& cached : textures_loaded) {
-                if (cached.path == fullPath) {
-                    textures.push_back(cached);
-                    alreadyLoaded = true;
-                    break;
-                }
-            }
-            if (alreadyLoaded) {
-                continue;
-            }
-
-            Mesh::Texture tex;
-            const auto cached = gTextureCache.find(fullPath);
-            if (cached != gTextureCache.end()) {
-                tex.id = cached->second;
-            } else {
-                tex.id = textureFromFile(fullPath);
-                gTextureCache[fullPath] = tex.id;
-            }
-            tex.type = typeName;
-            tex.path = fullPath;
-            textures.push_back(tex);
-            textures_loaded.push_back(tex);
-        }
-    }
-
     return Mesh(vertices, indices, textures);
 }
 
@@ -140,7 +101,6 @@ std::vector<Mesh::Texture> Model::loadMaterialTextures(
     return textures;
 }
 
-// Nieuwe functie toevoegen in model.cpp:
 unsigned int Model::textureFromEmbedded(const aiScene* scene, int index) {
     const aiTexture* tex = scene->mTextures[index];
     unsigned int id;
