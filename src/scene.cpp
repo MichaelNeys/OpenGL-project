@@ -164,31 +164,31 @@ Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
         Village = new Model(VillageBase);
         std::cout << "Village geladen: " << VillageBase << std::endl;
     } else {
-        Elytra = nullptr;
+        Bee = nullptr;
         std::cerr << "Village model niet gevonden!" << std::endl;
     }
 
-    // Load all exported Elytra mesh parts if present.
-    std::string ElytraPath = "";
-    std::vector<std::string> ElytraBases = {
+    // Load all exported Bee mesh parts if present.
+    std::string BeePath = "";
+    std::vector<std::string> BeeBases = {
         "models/Bee-1",
         "../models/Bee-1"
     };
 
-    for (const std::string& base : ElytraBases) {
+    for (const std::string& base : BeeBases) {
         const std::string path = base + "/minecraft_bee.glb";
         if (std::filesystem::exists(path)) {
-            ElytraPath = path;
+            BeePath = path;
             break;
         }
     }
 
-    if (!ElytraPath.empty()) {
-        Elytra = new Model(ElytraPath);
-        std::cout << "Elytra geladen: " << ElytraPath << std::endl;
+    if (!BeePath.empty()) {
+        Bee = new Model(BeePath);
+        std::cout << "Bee geladen: " << BeePath << std::endl;
     } else {
-        Elytra = nullptr;
-        std::cerr << "Elytra model niet gevonden!" << std::endl;
+        Bee = nullptr;
+        std::cerr << "Bee model niet gevonden!" << std::endl;
     }
 }
 
@@ -211,6 +211,7 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
     lightingShader.setInt("texture_diffuse1", 0);
 
     // --- Minecraft village ---
+    glDisable(GL_CULL_FACE);
     if (Village != nullptr) {
         glm::mat4 VillageModel = glm::mat4(1.0f);
         VillageModel = glm::translate(VillageModel, glm::vec3(0.0f, -3.0f, -10.0f));
@@ -223,18 +224,19 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
         lightingShader.setFloat("material.shininess", 10.0f);
         Village->Draw(lightingShader);
     }
+    glEnable(GL_CULL_FACE);
 
-    // --- Elytra model ---
-    if (Elytra != nullptr) {
-        glm::mat4 ElytraModel = glm::mat4(1.0f);
-        ElytraModel = glm::translate(ElytraModel, glm::vec3(1.0f, 1.8f, -3.0f));
-        ElytraModel = glm::scale(ElytraModel, glm::vec3(0.01f));
-        lightingShader.setMat4("model", ElytraModel);
+    // --- Bee model ---
+    if (Bee != nullptr) {
+        glm::mat4 BeeModel = glm::mat4(1.0f);
+        BeeModel = glm::translate(BeeModel, glm::vec3(1.0f, 1.8f, -3.0f));
+        BeeModel = glm::scale(BeeModel, glm::vec3(0.01f));
+        lightingShader.setMat4("model", BeeModel);
         lightingShader.setVec3("material.ambient",  glm::vec3(0.10f, 0.10f, 0.10f));
         lightingShader.setVec3("material.diffuse",  glm::vec3(0.35f, 0.35f, 0.38f));
         lightingShader.setVec3("material.specular", glm::vec3(0.45f, 0.45f, 0.48f));
         lightingShader.setFloat("material.shininess", 40.0f);
-        Elytra->Draw(lightingShader);
+        Bee->Draw(lightingShader);
     }
 
     // --- lamp ---
@@ -265,8 +267,8 @@ void Scene::Delete() {
         Village->Delete();
         delete Village;
     }
-    if (Elytra != nullptr) {
-        Elytra->Delete();
-        delete Elytra;
+    if (Bee != nullptr) {
+        Bee->Delete();
+        delete Bee;
     }
 }
