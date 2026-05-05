@@ -73,15 +73,22 @@ Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
     lampMesh  = new Mesh(cubeVertices, vertexCount, true);
 
     std::vector<glm::vec3> bezierPoints;
-    int numSegments = 100;
+    int numSegments = 300;
     bezierPointCount = numSegments + 1;
 
     std::vector<glm::vec3> controlPoints = {
-        glm::vec3(-30.0f,  0.0f, -3.0f), // Start (P0)
-        glm::vec3(-1.0f,   4.0f, -1.0f), // P1
-        glm::vec3( 1.0f,  -4.0f,  1.0f), // P2
-        glm::vec3( 3.0f,   0.0f,  3.0f), // P3
-        // glm::vec3( 30.0f, 10.0f, 30.0f)  // P4 (ez toe te voege nu)
+        glm::vec3(15.0f,  0.0f, -10.0f),
+        glm::vec3(15.0f,  0.0f, -10.0f),
+        glm::vec3(5.5f,  0.0f, -10.0f),
+        glm::vec3(9.0f,   0.5f, -15.0f),
+        glm::vec3( 1.0f,  0.0f,  -15.0f),
+        glm::vec3(0.0f, 0.2f, -17.0f),
+        glm::vec3(-0.4f, 0.4f, -17.0f),
+        glm::vec3(-1.5f, 1.8f, -13.5f),
+        glm::vec3(-4.0f, 1.4f, -9.0f),
+        glm::vec3(-6.0f, 0.7f, -9.5f),
+        glm::vec3(-10.0f, -0.5f, -9.75f),
+        glm::vec3(-12.0f, 0.0f, -10.0f),
     };
 
     // create vertices voor curve
@@ -173,9 +180,9 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
     // --- Minecraft village ---
     if (Village != nullptr) {
         glm::mat4 VillageModel = glm::mat4(1.0f);
-        VillageModel = glm::translate(VillageModel, glm::vec3(0.0f, 0.0f, -10.0f));
+        VillageModel = glm::translate(VillageModel, glm::vec3(0.0f, -3.0f, -10.0f));
         VillageModel = glm::rotate(VillageModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        VillageModel = glm::scale(VillageModel, glm::vec3(1.0f));
+        VillageModel = glm::scale(VillageModel, glm::vec3(5.0f));
         lightingShader.setMat4("model", VillageModel);
         lightingShader.setVec3("material.ambient",  glm::vec3(0.8f, 0.8f, 0.8f));
         lightingShader.setVec3("material.diffuse",  glm::vec3(0.8f, 0.8f, 0.8f));
