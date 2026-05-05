@@ -73,7 +73,7 @@ Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
     lampMesh  = new Mesh(cubeVertices, vertexCount, true);
 
     std::vector<glm::vec3> bezierPoints;
-    int numSegments = 300;
+    int numSegments = 500;
     bezierPointCount = numSegments + 1;
 
     std::vector<glm::vec3> controlPoints = {
@@ -98,10 +98,10 @@ Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
         glm::vec3(-13.0f, 0.5f, -17.5f),
         glm::vec3(-13.0f, -0.7f, -18.0f),
         glm::vec3(-11.5f, -1.5f, -20.0f),
-        glm::vec3(-5.0f, -1.5f, -31.0f),
-        glm::vec3(0.5f, -1.8f, -33.0f),
-        glm::vec3(-26.0f, 0.4f, -31.0f),
-        glm::vec3(-20.0f, 1.0f, -18.0f),
+        glm::vec3(0.0f, -1.5f, -35.0f),
+        glm::vec3(4.5f, -1.8f, -38.0f),
+        glm::vec3(-33.0f, 0.4f, -31.0f),
+        glm::vec3(-26.0f, 1.0f, -18.0f),
         glm::vec3(-17.0f, 0.5f, -8.0f),
         glm::vec3(-14.0f, 0.0f, -18.0f),
         glm::vec3(-1.0f, 0.0f, -18.0f),
@@ -110,6 +110,14 @@ Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
         glm::vec3(4.0f, 0.0f, -18.0f),
         glm::vec3(7.0f, 0.5f, -18.0f),
         glm::vec3(10.0f, 1.0f, -18.0f),
+        glm::vec3(20.0f, -1.3f, -21.5f),
+        glm::vec3(20.0f, -1.5f, -25.5f),
+        glm::vec3(18.0f, -1.5f, -19.5f),
+        glm::vec3(17.0f, -2.5f, -13.0f),
+        glm::vec3(17.0f, 0.7f, -14.5f),
+        glm::vec3(17.0f, 1.0f, -11.0f),
+        glm::vec3(17.0f, 1.0f, -10.0f),
+        glm::vec3(15.0f,  0.0f, -10.0f),
     };
 
     // create vertices voor curve
