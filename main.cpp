@@ -22,7 +22,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
     if (!window) { glfwTerminate(); return -1; }
 
     glfwMakeContextCurrent(window);
@@ -38,7 +38,7 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 1920, 1080);
 
     // inladen van shaders
     Shader lightingShader("shaders/lighting.vert", "shaders/lighting.frag");
@@ -61,7 +61,7 @@ int main() {
 
         // matrixen verkrijgen
         glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 800.0f / 600.0f, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 100.0f);
 
         // tekenen van objecten
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
