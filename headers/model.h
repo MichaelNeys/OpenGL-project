@@ -14,12 +14,12 @@ public:
     Model(const std::string& path) { loadModel(path); }
     void Draw(Shader& shader);
     void Delete();
+    std::vector<Mesh>          meshes;
 
 private:
     Assimp::Importer  importer;       // member! anders wordt _scene ongeldig
     const aiScene*    _scene = nullptr;
 
-    std::vector<Mesh>          meshes;
     std::vector<Mesh::Texture> textures_loaded;
     std::string                directory;
 

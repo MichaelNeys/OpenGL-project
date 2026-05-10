@@ -102,7 +102,7 @@ static float cubeVertices[] = {
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
 
-Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
+Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     unsigned int vertexCount = sizeof(cubeVertices) / sizeof(float);
     lampMesh  = new Mesh(cubeVertices, vertexCount, true);
 
@@ -230,10 +230,39 @@ Scene::Scene() : lightPos(0.0f, 50.0f, 50.0f) {
 }
 
 void Scene::setLightUniforms(Shader& shader) {
+    // 1. GLOBAAL LICHT (Maan / Nacht lucht)
     shader.setVec3("light.position", lightPos);
-    shader.setVec3("light.ambient",  glm::vec3(0.8f, 0.8f, 0.8f));
-    shader.setVec3("light.diffuse",  glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.setVec3("light.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    shader.setVec3("light.ambient",  glm::vec3(0.05f, 0.05f, 0.1f)); // Donkerblauwige nacht
+    shader.setVec3("light.diffuse",  glm::vec3(0.2f, 0.2f, 0.3f));   // Zwak maanlicht
+    shader.setVec3("light.specular", glm::vec3(0.1f, 0.1f, 0.1f));
+
+    // 2. LANTAARNS (Point Lights)
+    // LET OP: Je moet deze coördinaten waarschijnlijk nog even tweaken 
+    // zodat ze precies overeenkomen met de plekken van jouw Village lantaarns!
+    glm::vec3 pointLightPositions[] = {
+        glm::vec3( 2.0f,  0.5f, -15.0f),  // Lantaarn 1
+        glm::vec3(-11.0f,  0.5f, -15.0f),  // Lantaarn 2
+        glm::vec3( 11.0f,  0.5f,  -15.0f),  // Lantaarn 3
+        glm::vec3(-2.0f,  0.5f,  -15.0f)   // Lantaarn 4
+    };
+
+    // Stuur de data in een loopje naar de shader
+    for(int i = 0; i < 4; i++) {
+        std::string number = std::to_string(i);
+        
+        // Positie doorgeven
+        shader.setVec3("pointLights[" + number + "].position", pointLightPositions[i]);
+        
+        // Kleur instellen (Mooi warm oranje/geel Minecraft licht)
+        shader.setVec3("pointLights[" + number + "].ambient",  glm::vec3(0.1f, 0.05f, 0.0f));
+        shader.setVec3("pointLights[" + number + "].diffuse",  glm::vec3(1.0f, 0.6f, 0.2f));
+        shader.setVec3("pointLights[" + number + "].specular", glm::vec3(1.0f, 0.8f, 0.5f));
+        
+        // Afzwakking berekening (Deze waarden geven een licht-radius van ongeveer 15-20 meter)
+        shader.setFloat("pointLights[" + number + "].constant",  1.0f);
+        shader.setFloat("pointLights[" + number + "].linear",    0.09f);
+        shader.setFloat("pointLights[" + number + "].quadratic", 0.032f);
+    }
 }
 
 void Scene::Draw(Shader& lightingShader, Shader& lampShader,
@@ -250,19 +279,38 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
     // --- Minecraft village ---
     glDisable(GL_CULL_FACE);
     if (Village != nullptr) {
+        // Bereken de positie/schaal van het hele dorp
         glm::mat4 VillageModel = glm::mat4(1.0f);
         VillageModel = glm::translate(VillageModel, glm::vec3(0.0f, -3.0f, -10.0f));
         VillageModel = glm::rotate(VillageModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         VillageModel = glm::scale(VillageModel, glm::vec3(5.0f));
-        lightingShader.setMat4("model", VillageModel);
-        lightingShader.setVec3("material.ambient",  glm::vec3(0.8f, 0.8f, 0.8f));
-        lightingShader.setVec3("material.diffuse",  glm::vec3(0.8f, 0.8f, 0.8f));
-        lightingShader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
-        lightingShader.setFloat("material.shininess", 10.0f);
-        Village->Draw(lightingShader);
+
+        for (unsigned int i = 0; i < Village->meshes.size(); i++) {
+            
+            if (i == 5 || i == 7 || i == 8) {
+                
+                lampShader.use();
+                lampShader.setMat4("model", VillageModel);
+                lampShader.setMat4("view", view);
+                lampShader.setMat4("projection", projection);
+                
+                Village->meshes[i].Draw(lampShader);
+
+            } else {
+                
+                lightingShader.use();
+                lightingShader.setMat4("model", VillageModel);
+                lightingShader.setVec3("material.ambient",  glm::vec3(0.2f, 0.2f, 0.2f));
+                lightingShader.setVec3("material.diffuse",  glm::vec3(0.8f, 0.8f, 0.8f));
+                lightingShader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
+                lightingShader.setFloat("material.shininess", 10.0f);
+                
+                Village->meshes[i].Draw(lightingShader);
+            }
+        }
     }
     glEnable(GL_CULL_FACE);
-
+    
     // --- Bee model ---
     if (Bee != nullptr) {
         // tijd en snelheid
@@ -308,18 +356,18 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
     }
 
     // --- lamp ---
-    lampShader.use();
-    glm::mat4 lampModel = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2f));
-    lampShader.setMat4("model",      lampModel);
-    lampShader.setMat4("view",       view);
-    lampShader.setMat4("projection", projection);
-    lampMesh->Draw();
+    // lampShader.use();
+    // glm::mat4 lampModel = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2f));
+    // lampShader.setMat4("model",      lampModel);
+    // lampShader.setMat4("view",       view);
+    // lampShader.setMat4("projection", projection);
+    // lampMesh->Draw();
 
     // --- bezier curve ---
-    lampShader.use(); 
-    lampShader.setMat4("model", glm::mat4(1.0f));
-    lampShader.setMat4("view", view);
-    lampShader.setMat4("projection", projection);
+    // lampShader.use(); 
+    // lampShader.setMat4("model", glm::mat4(1.0f));
+    // lampShader.setMat4("view", view);
+    // lampShader.setMat4("projection", projection);
 
     glBindVertexArray(bezierVAO);
     glDrawArrays(GL_LINE_STRIP, 0, bezierPointCount); 

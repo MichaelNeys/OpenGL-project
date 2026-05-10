@@ -7,26 +7,27 @@
 
 class Mesh {
 public:
-    unsigned int VAO, VBO;
-    unsigned int vertexCount, stride;
-
-    // Bestaande constructor (voor kubus/lamp)
-    Mesh(float* vertices, unsigned int vertexCount, bool hasNormals);
-    void Draw();
-    void Delete();
-
-    // Assimp modellen
     struct Vertex {
         glm::vec3 Position;
         glm::vec3 Normal;
         glm::vec2 TexCoords;
     };
+    
     struct Texture {
         unsigned int id;
         std::string  type;  
         // "texture_diffuse" of "texture_normal"
         std::string  path;
     };
+
+    unsigned int VAO, VBO;
+    unsigned int vertexCount, stride;
+
+    const std::vector<Vertex>& getVertices() const { return _vertices; }
+
+    Mesh(float* vertices, unsigned int vertexCount, bool hasNormals);
+    void Draw();
+    void Delete();
 
     // Nieuwe constructor
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);

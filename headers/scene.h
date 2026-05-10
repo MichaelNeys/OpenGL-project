@@ -37,6 +37,7 @@ private:
 
     void buildLUT(int lutResolution);
     float getTForDistance(float targetDistance);
+    std::vector<glm::vec3> lanternLightPositions;
 };
 
 #endif
