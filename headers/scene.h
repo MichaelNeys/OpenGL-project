@@ -1,43 +1,40 @@
-#ifndef SCENE_H
-#define SCENE_H
-
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <shader.h>
-#include <mesh.h>
-#include <model.h>
+#pragma once
 #include <vector>
 #include <string>
-#include <deque>
+#include <glm/glm.hpp>
+#include "shader.h"
+#include "mesh.h"
+#include "model.h"
+#include "skybox.h"
+#include "terrain.h"
 
 class Scene {
 public:
-    glm::vec3 lightPos;
-
     Scene();
-    void Draw(Shader& lightingShader, Shader& lampShader, glm::mat4& view, glm::mat4& projection, glm::vec3& cameraPos);
+    void Draw(Shader& lightingShader, Shader& lampShader,
+              glm::mat4& view, glm::mat4& projection, glm::vec3& cameraPos);
     void Delete();
 
 private:
-    Mesh* lampMesh;
     void setLightUniforms(Shader& shader);
 
-    unsigned int bezierVAO;
-    unsigned int bezierVBO;
-    unsigned int bezierPointCount;
+    glm::vec3 lightPos;
+
+    Skybox*  skybox  = nullptr;
+    Terrain* terrain = nullptr;
 
     Model* Village = nullptr;
-    unsigned int VillageTexture = 0;
-    Model* Bee;
+    Model* Bee     = nullptr;
+    Mesh*  lampMesh = nullptr;
+
+    unsigned int bezierVAO, bezierVBO;
+    int bezierPointCount;
 
     std::vector<glm::vec3> m_controlPoints;
-    std::vector<float> arcLengthLUT;
-    float totalCurveLength;
-    float currentDistance = 0.0f;
+    std::vector<float>     arcLengthLUT;
+    float totalCurveLength = 0.0f;
+    float currentDistance  = 0.0f;
 
-    void buildLUT(int lutResolution);
     float getTForDistance(float targetDistance);
-    std::vector<glm::vec3> lanternLightPositions;
+    void  buildLUT(int lutResolution);
 };
-
-#endif

@@ -33,6 +33,8 @@ uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform vec3 viewPos;
 uniform sampler2D texture_diffuse1;
 uniform bool hasDiffuseTexture;
+// Albedo als er geen diffuse-texture is (grond, eenvoudige meshes)
+uniform vec3 flatAlbedo;
 
 // Functiedeclaratie voor het berekenen van 1 lantaarn
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 albedo);
@@ -40,7 +42,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
 void main() {
     vec4 texColor = hasDiffuseTexture 
         ? texture(texture_diffuse1, TexCoords) 
-        : vec4(0.8, 0.8, 0.8, 1.0);
+        : vec4(flatAlbedo, 1.0);
 
     if (texColor.a < 0.5) discard;  // transparante pixels weggooien
 

@@ -61,7 +61,7 @@ int main() {
 
         // matrixen verkrijgen
         glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 300.0f);
 
         // tekenen van objecten
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);

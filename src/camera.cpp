@@ -29,6 +29,12 @@ void Camera::ProcessKeyboard(GLFWwindow* window, float deltaTime) {
         Position -= Right * velocity;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         Position += Right * velocity;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        Position += Up * velocity;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        Position -= Up * velocity;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        Position += Front;
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset) {
