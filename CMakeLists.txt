@@ -64,12 +64,14 @@ target_include_directories(GLAD PUBLIC ${CMAKE_SOURCE_DIR}/includes ${CMAKE_SOUR
 # --- 6. Main Executable ---
 add_executable(opengl_project
     main.cpp
-    src/shader.cpp
     src/camera.cpp
     src/mesh.cpp
     src/model.cpp
     src/scene.cpp
+    src/shader.cpp
     src/stb_image.cpp
+    src/terrain.cpp
+    src/skybox.cpp
 )
 
 # --- 7. Link Libraries ---
