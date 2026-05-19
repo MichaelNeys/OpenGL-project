@@ -141,12 +141,12 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
         glm::vec3(-13.0f, 0.5f, -17.5f),
         glm::vec3(-13.0f,-0.7f, -18.0f),
         glm::vec3(-11.5f,-1.5f, -20.0f),
-        glm::vec3(  5.0f,-1.5f, -35.0f),
-        glm::vec3(  5.5f,-1.8f, -38.0f),
+        glm::vec3(  5.1f,-1.5f, -35.0f),
+        glm::vec3(  5.8f,-1.8f, -38.0f),
         glm::vec3(-35.0f, 0.4f, -36.0f),
         glm::vec3(-30.0f, 1.0f, -14.0f),
         glm::vec3(-19.0f, 0.5f,  -9.0f),
-        glm::vec3(-14.0f, 0.0f, -18.0f),
+        glm::vec3(-14.0f, -0.5f, -18.0f),
         glm::vec3( -1.0f, 0.0f, -18.0f),
         glm::vec3(  0.0f, 0.0f, -18.0f),
         glm::vec3(  1.0f, 0.0f, -18.0f),
@@ -184,7 +184,7 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     srand((unsigned)time(NULL));
 
     // Hoeveel stuifmeel blokjes wil je in totaal over de hele route?
-    int amountOfPollen = 600; 
+    int amountOfPollen = 6000; 
 
     for (int i = 0; i < amountOfPollen; i++) {
         // Verdeel ze netjes over de lengte van de route met de LUT
@@ -193,7 +193,7 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
         glm::vec3 basePos = calculateBezierPoint(t, m_controlPoints);
 
         // Voeg een beetje "ruis" / willekeurige spreiding toe
-        float radius = 0.05f; // Hoe ver mogen ze afwijken van de middellijn?
+        float radius = 0.025f; // Hoe ver mogen ze afwijken van de middellijn?
         float randX = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
         float randY = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
         float randZ = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
@@ -355,7 +355,7 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
         model = glm::rotate(model, pos.z * 10.0f, glm::vec3(0.2f, 1.0f, 0.5f));
         
         // Maak ze klein
-        model = glm::scale(model, glm::vec3(0.01f)); 
+        model = glm::scale(model, glm::vec3(0.005f)); 
         
         lightingShader.setMat4("model", model);
         
