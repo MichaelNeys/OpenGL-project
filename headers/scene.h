@@ -14,6 +14,7 @@ public:
     void Draw(Shader& lightingShader, Shader& lampShader,
               glm::mat4& view, glm::mat4& projection, glm::vec3& cameraPos);
     void Delete();
+    bool redstoneLampsOn = true;
 
 private:
     void setLightUniforms(Shader& shader);

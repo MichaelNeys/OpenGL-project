@@ -277,7 +277,17 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
         VillageModel = glm::scale(VillageModel, glm::vec3(5.0f));
 
         for (unsigned int i = 0; i < Village->meshes.size(); i++) {
-            if (i == 5 || i == 7 || i == 8) {
+            
+            // Bepaal of we de glow shader moeten gebruiken
+            bool useLampShader = false;
+            if (i == 7 || i == 8) {
+                useLampShader = true; // Gewone lantaarns zijn altijd AAN
+            }
+            if (i == 5 && redstoneLampsOn) {
+                useLampShader = true; // Redstone lampen alleen als de schakelaar AAN is!
+            }
+
+            if (useLampShader) {
                 lampShader.use();
                 lampShader.setMat4("model", VillageModel);
                 lampShader.setMat4("view", view);
@@ -286,6 +296,8 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
             } else {
                 lightingShader.use();
                 lightingShader.setMat4("model", VillageModel);
+                
+                // Als de redstone lamp UIT is, wordt hij net als de muren getekend (donker)
                 lightingShader.setVec3("material.ambient",  glm::vec3(0.2f, 0.2f, 0.2f));
                 lightingShader.setVec3("material.diffuse",  glm::vec3(0.8f, 0.8f, 0.8f));
                 lightingShader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
