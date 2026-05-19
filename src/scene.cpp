@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <GLFW/glfw3.h>
+#include <cstdlib>
 
 static glm::vec3 calculateBezierPoint(float t, const std::vector<glm::vec3>& controlPoints) {
     if (controlPoints.empty()) return glm::vec3(0.0f);
@@ -179,6 +180,28 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
+    // Zorg dat de willekeurige getallen elke keer anders zijn
+    srand((unsigned)time(NULL));
+
+    // Hoeveel stuifmeel blokjes wil je in totaal over de hele route?
+    int amountOfPollen = 600; 
+
+    for (int i = 0; i < amountOfPollen; i++) {
+        // Verdeel ze netjes over de lengte van de route met de LUT
+        float targetDist = (totalCurveLength / amountOfPollen) * i;
+        float t = getTForDistance(targetDist);
+        glm::vec3 basePos = calculateBezierPoint(t, m_controlPoints);
+
+        // Voeg een beetje "ruis" / willekeurige spreiding toe
+        float radius = 0.05f; // Hoe ver mogen ze afwijken van de middellijn?
+        float randX = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
+        float randY = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
+        float randZ = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
+
+        // Sla de uiteindelijke, verspreide positie op
+        pollenPositions.push_back(basePos + glm::vec3(randX, randY, randZ));
+    }
+
     // Village
     for (const std::string& base : {"models/Minecraft ville", "../models/Minecraft ville"}) {
         std::string path = base + "/minecraft_ville.glb";
@@ -309,10 +332,39 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
         Bee->Draw(lightingShader);
     }
 
-    // Bezier curve (uitgecommentarieerd)
-    glBindVertexArray(bezierVAO);
-    glDrawArrays(GL_LINE_STRIP, 0, bezierPointCount);
-    glBindVertexArray(0);
+    // --- Stuifmeel spoor tekenen (Pollen trail) ---
+    lightingShader.use(); 
+    lightingShader.setMat4("view", view);
+    lightingShader.setMat4("projection", projection);
+    
+    // Zet de textuur uit, en kies een mooie goud/gele pollen kleur!
+    lightingShader.setBool("hasDiffuseTexture", false);
+    lightingShader.setVec3("fallbackColor", glm::vec3(1.0f, 0.8f, 0.2f)); 
+
+    // Zet culling uit voor de zekerheid, zodat we altijd alle kanten van de blokjes zien
+    glDisable(GL_CULL_FACE);
+
+    // Loop door alle gegenereerde puntjes heen
+    for (const glm::vec3& pos : pollenPositions) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, pos);
+        
+        // Geef elk blokje een willekeurige kanteling gebaseerd op zijn positie!
+        // Dit breekt het "rechte" patroon en maakt het een echte wolk van deeltjes.
+        model = glm::rotate(model, pos.x * 15.0f, glm::vec3(1.0f, 0.5f, 0.2f)); 
+        model = glm::rotate(model, pos.z * 10.0f, glm::vec3(0.2f, 1.0f, 0.5f));
+        
+        // Maak ze klein
+        model = glm::scale(model, glm::vec3(0.01f)); 
+        
+        lightingShader.setMat4("model", model);
+        
+        // Teken de kubus met belichting
+        lampMesh->Draw(); 
+    }
+    
+    // Zet culling weer netjes aan voor de rest van je programma
+    glEnable(GL_CULL_FACE);
 }
 
 void Scene::Delete() {

@@ -37,4 +37,5 @@ private:
 
     float getTForDistance(float targetDistance);
     void  buildLUT(int lutResolution);
+    std::vector<glm::vec3> pollenPositions;
 };
