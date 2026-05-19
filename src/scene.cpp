@@ -132,7 +132,7 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
         glm::vec3(-7.0f,  0.7f,  -9.5f),
         glm::vec3(-8.5f, -1.5f, -10.0f),
         glm::vec3(-7.0f,  0.7f,  -9.5f),
-        glm::vec3(-12.0f,-1.2f, -10.5f),
+        glm::vec3(-12.0f,-1.6f, -10.5f), // laag gaan voor naar buiten te sturen
         glm::vec3(-20.0f,-0.9f,  -6.0f),
         glm::vec3(-18.0f, 0.0f,  -5.0f),
         glm::vec3(-11.0f, 0.1f,  -6.5f),
