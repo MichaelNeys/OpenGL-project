@@ -12,7 +12,7 @@ public:
     unsigned int getResultTexture() const;
 
     bool enabled = true;
-    float threshold = 1.5f; // helderheidsdrempel voor bloom
+    float threshold = 0.8f; // helderheidsdrempel voor bloom
     float strength  = 0.2f; // hoe sterk de bloom is
 
 private:

@@ -223,14 +223,49 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
         }
     }
     if (!Bee) std::cerr << "Bee model niet gevonden!" << std::endl;
+
+    // --- KRUISJE (CROSSHAIR) SETUP ---
+    // We tekenen 2 kruisende lijnen. We vullen ook dummy-data in voor Normals en TexCoords,
+    // zodat jouw lightingShader niet in de war raakt omdat hij die verwacht!
+    float crosshairVertices[] = {
+        // Positie (X, Y, Z) | Normals (X, Y, Z) | TexCoords (U, V)
+        // Lijn 1: Horizontaal
+        -0.03f,  0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+         0.03f,  0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+        // Lijn 2: Verticaal
+         0.0f, -0.04f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+         0.0f,  0.04f, 0.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &crosshairVAO);
+    glGenBuffers(1, &crosshairVBO);
+
+    glBindVertexArray(crosshairVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(crosshairVertices), crosshairVertices, GL_STATIC_DRAW);
+
+    // Vertel de GPU hoe de array is opgebouwd (komt exact overeen met je kubus)
+    // 0 = Positie
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // 1 = Normaal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // 2 = TexCoords
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
 }
 
 void Scene::setLightUniforms(Shader& shader) {
+    // 1. GLOBAAL LICHT (Maan)
     shader.setVec3("light.position", lightPos);
     shader.setVec3("light.ambient",  glm::vec3(0.08f, 0.08f, 0.15f));
     shader.setVec3("light.diffuse",  glm::vec3(0.25f, 0.25f, 0.35f));
     shader.setVec3("light.specular", glm::vec3(0.1f,  0.1f,  0.1f));
 
+    // 2. JE VASTE LANTAARNS (Altijd aan)
     glm::vec3 pointLightPositions[] = {
         glm::vec3( 2.0f, 0.5f, -15.0f),
         glm::vec3(-11.0f, 0.5f, -15.0f),
@@ -374,6 +409,31 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
         // Teken de kubus met belichting
         lampMesh->Draw(); 
     }
+
+    // --- KRUISJE (CROSSHAIR) TEKENEN ---
+    
+    // 1. Zet de Depth Test uit: het kruisje wordt nu overal overheen getekend!
+    glDisable(GL_DEPTH_TEST);
+    
+    lightingShader.use(); 
+    
+    // 2. MAGIE: Door de matrices op "Identity" (1.0f) te zetten, wordt het 
+    // perspectief genegeerd en tekenen we direct plat op het 2D-scherm.
+    lightingShader.setMat4("model", glm::mat4(1.0f));
+    lightingShader.setMat4("view", glm::mat4(1.0f));
+    lightingShader.setMat4("projection", glm::mat4(1.0f));
+    
+    // 3. Maak het kruisje mooi spierwit
+    lightingShader.setBool("hasDiffuseTexture", false);
+    lightingShader.setVec3("fallbackColor", glm::vec3(1.0f, 1.0f, 1.0f)); 
+
+    // 4. Teken de 2 lijnen (4 punten)
+    glBindVertexArray(crosshairVAO);
+    glDrawArrays(GL_LINES, 0, 4);
+    glBindVertexArray(0);
+    
+    // 5. BELANGRIJK: Zet de Depth Test weer aan, anders tekent het volgende frame fout!
+    glEnable(GL_DEPTH_TEST);
     
     // Zet culling weer netjes aan voor de rest van je programma
     glEnable(GL_CULL_FACE);
@@ -386,6 +446,10 @@ void Scene::Delete() {
     terrain->Delete();
     delete terrain;
 
+    // Verwijder de crosshair VAO en VBO
+    glDeleteVertexArrays(1, &crosshairVAO);
+    glDeleteBuffers(1, &crosshairVBO);
+
     glDeleteVertexArrays(1, &bezierVAO);
     glDeleteBuffers(1, &bezierVBO);
 
@@ -395,3 +459,67 @@ void Scene::Delete() {
     if (Village) { Village->Delete(); delete Village; }
     if (Bee)     { Bee->Delete();     delete Bee;     }
 }
+
+// Helper functie: Test of een straal (laser) een specifieke 3D-driehoek doorboort
+bool rayIntersectsTriangle(glm::vec3 rayOrigin, glm::vec3 rayDir, glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+    const float EPSILON = 0.0000001f;
+    glm::vec3 edge1 = v1 - v0;
+    glm::vec3 edge2 = v2 - v0;
+    glm::vec3 h = glm::cross(rayDir, edge2);
+    float a = glm::dot(edge1, h);
+    
+    if (a > -EPSILON && a < EPSILON) return false; // Straal loopt parallel aan de driehoek
+
+    float f = 1.0f / a;
+    glm::vec3 s = rayOrigin - v0;
+    float u = f * glm::dot(s, h);
+    if (u < 0.0f || u > 1.0f) return false;
+
+    glm::vec3 q = glm::cross(s, edge1);
+    float v = f * glm::dot(rayDir, q);
+    if (v < 0.0f || u + v > 1.0f) return false;
+
+    float t = f * glm::dot(edge2, q);
+    if (t > EPSILON) return true; // Raak! We hebben de driehoek geraakt.
+
+    return false;
+}
+
+void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 cameraPos) {
+    if (Village == nullptr || Village->meshes.size() <= 5) return;
+
+    // 1. Omdat we een FPS camera hebben, schieten we ALTIJD door het exacte midden (0.0f, 0.0f)!
+    glm::vec4 ray_clip = glm::vec4(0.0f, 0.0f, -1.0f, 1.0f);
+    glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
+    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f); 
+    glm::vec3 ray_wor = glm::normalize(glm::vec3(glm::inverse(view) * ray_eye));
+
+    // 2. We hebben de juiste schaal/positie van het dorp nodig
+    glm::mat4 VillageModel = glm::mat4(1.0f);
+    VillageModel = glm::translate(VillageModel, glm::vec3(0.0f, -3.0f, -10.0f));
+    VillageModel = glm::rotate(VillageModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    VillageModel = glm::scale(VillageModel, glm::vec3(5.0f));
+
+    // 3. Haal de punten en de driehoeken van de Redstone Lampen op (Index 5)
+    const std::vector<Mesh::Vertex>& verts = Village->meshes[5].getVertices();
+    const std::vector<unsigned int>& indices = Village->meshes[5].getIndices();
+
+    // 4. Test onze laserstraal tegen ELKE driehoek van de lampen
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        glm::vec3 v0 = verts[indices[i]].Position;
+        glm::vec3 v1 = verts[indices[i+1]].Position;
+        glm::vec3 v2 = verts[indices[i+2]].Position;
+
+        v0 = glm::vec3(VillageModel * glm::vec4(v0, 1.0f));
+        v1 = glm::vec3(VillageModel * glm::vec4(v1, 1.0f));
+        v2 = glm::vec3(VillageModel * glm::vec4(v2, 1.0f));
+
+        if (rayIntersectsTriangle(cameraPos, ray_wor, v0, v1, v2)) {
+            // RAAK!
+            redstoneLampsOn = !redstoneLampsOn;
+            std::cout << "Redstone Lamp geraakt met kruisje! Status: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
+            break; 
+        }
+    }
+}
+

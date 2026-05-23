@@ -68,6 +68,7 @@ void Bloom::setupPingpong(unsigned int& fbo, unsigned int& tex) {
 
 void Bloom::bindScene() {
     glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+    glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
