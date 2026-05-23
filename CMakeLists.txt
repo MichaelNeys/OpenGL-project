@@ -72,6 +72,7 @@ add_executable(opengl_project
     src/stb_image.cpp
     src/terrain.cpp
     src/skybox.cpp
+    src/postprocess.cpp
 )
 
 # --- 7. Link Libraries ---
@@ -99,3 +100,4 @@ target_include_directories(opengl_project PRIVATE
 file(COPY shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY textures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY models DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+<

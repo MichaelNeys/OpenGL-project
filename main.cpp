@@ -6,6 +6,7 @@
 #include <shader.h>
 #include <camera.h>
 #include <scene.h>
+#include <postprocess.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -44,6 +45,8 @@ int main() {
     Shader lightingShader("shaders/lighting.vert", "shaders/lighting.frag");
     Shader lampShader("shaders/light.vert", "shaders/light.frag");
     Scene scene;
+    // inladen postprocessor:
+    PostProcessor postProcessor(1920, 1080);
 
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = (float)glfwGetTime();
@@ -63,8 +66,18 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 300.0f);
 
-        // tekenen van objecten
+        // tekenen van objecten en postprocesser
+        postProcessor.Bind();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
+        postProcessor.Unbind();
+        postProcessor.Draw();
+
+        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+            postProcessor.setEffect(PostEffect::NONE);
+        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+            postProcessor.setEffect(PostEffect::GAUSSIAN_BLUR);
+        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+            postProcessor.setEffect(PostEffect::EDGE_DETECT);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -72,6 +85,7 @@ int main() {
 
     // cleanup en afsluiten van scene
     scene.Delete();
+    postProcessor.Delete();
     glfwTerminate();
     return 0;
 }
