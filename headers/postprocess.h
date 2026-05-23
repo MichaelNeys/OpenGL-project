@@ -14,6 +14,7 @@ public:
     void Bind();           // begin scene renderen naar FBO
     void Unbind();         // stop renderen naar FBO
     void Draw();           // render quad met effect
+    void DrawFromTexture(unsigned int texture);
     void Delete();
     void setEffect(PostEffect effect) { currentEffect = effect; }
     PostEffect getEffect() const { return currentEffect; }

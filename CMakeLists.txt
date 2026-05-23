@@ -73,6 +73,7 @@ add_executable(opengl_project
     src/terrain.cpp
     src/skybox.cpp
     src/postprocess.cpp
+    src/bloom.cpp
 )
 
 # --- 7. Link Libraries ---

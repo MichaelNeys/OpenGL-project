@@ -49,7 +49,7 @@ PostProcessor::PostProcessor(int width, int height)
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    shader = new Shader("../shaders/postprocess.vert", "../shaders/postprocess.frag");
+    shader = new Shader("../shaders/quad.vert", "../shaders/postprocess.frag");
 }
 
 void PostProcessor::Bind() {
@@ -74,6 +74,24 @@ void PostProcessor::Draw() {
     glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+}
+
+void PostProcessor::DrawFromTexture(unsigned int texture) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    shader->use();
+    shader->setInt("screenTexture", 0);
+    shader->setInt("effect", (int)currentEffect);
+
+    glBindVertexArray(quadVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void PostProcessor::Delete() {

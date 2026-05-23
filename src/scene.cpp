@@ -298,7 +298,7 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
                 lightingShader.setMat4("model", VillageModel);
                 
                 // Als de redstone lamp UIT is, wordt hij net als de muren getekend (donker)
-                lightingShader.setVec3("material.ambient",  glm::vec3(0.2f, 0.2f, 0.2f));
+                lightingShader.setVec3("material.ambient",  glm::vec3(0.15f, 0.15f, 0.15f));
                 lightingShader.setVec3("material.diffuse",  glm::vec3(0.8f, 0.8f, 0.8f));
                 lightingShader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
                 lightingShader.setFloat("material.shininess", 10.0f);

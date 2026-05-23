@@ -7,6 +7,7 @@
 #include <camera.h>
 #include <scene.h>
 #include <postprocess.h>
+#include <bloom.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -47,6 +48,7 @@ int main() {
     Scene scene;
     // inladen postprocessor:
     PostProcessor postProcessor(1920, 1080);
+    Bloom bloom(1920, 1080);
 
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = (float)glfwGetTime();
@@ -72,7 +74,7 @@ int main() {
             rKeyPressed = false;
         }
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         // depth buffer instellen en aanzetten
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -80,11 +82,13 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 300.0f);
 
-        // tekenen van objecten en postprocesser
-        postProcessor.Bind();
+        // tekenen van objecten en postprocesser en bloom renderen
+        bloom.bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
-        postProcessor.Unbind();
-        postProcessor.Draw();
+        bloom.process();
+        bloom.render();
+        postProcessor.DrawFromTexture(bloom.getResultTexture());
+
 
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
             postProcessor.setEffect(PostEffect::NONE);
@@ -92,6 +96,12 @@ int main() {
             postProcessor.setEffect(PostEffect::GAUSSIAN_BLUR);
         if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
             postProcessor.setEffect(PostEffect::EDGE_DETECT);
+        static bool bWasPressed = false;
+        bool bPressed = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
+        if (bPressed && !bWasPressed) {
+            bloom.enabled = !bloom.enabled;
+        }
+        bWasPressed = bPressed;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -100,6 +110,7 @@ int main() {
     // cleanup en afsluiten van scene
     scene.Delete();
     postProcessor.Delete();
+    bloom.Delete();
     glfwTerminate();
     return 0;
 }
