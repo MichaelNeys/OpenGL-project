@@ -110,6 +110,7 @@ int main() {
         bool bPressed = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
         if (bPressed && !bWasPressed) {
             bloom.enabled = !bloom.enabled;
+            std::cout << "Bloom: " << (bloom.enabled ? "AAN" : "UIT") << std::endl;
         }
         bWasPressed = bPressed;
 
