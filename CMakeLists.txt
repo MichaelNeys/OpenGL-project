@@ -100,4 +100,3 @@ target_include_directories(opengl_project PRIVATE
 file(COPY shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY textures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY models DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-<

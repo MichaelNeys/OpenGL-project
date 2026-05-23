@@ -80,6 +80,18 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 300.0f);
 
+        static bool leftMousePressed = false;
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            if (!leftMousePressed) {
+                leftMousePressed = true;
+                
+                // Vuur de laser af direct vanuit het midden van de camera!
+                scene.checkMouseClick(view, projection, camera.Position); 
+            }
+        } else {
+            leftMousePressed = false;
+        }
+
         // tekenen van objecten en postprocesser
         postProcessor.Bind();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);

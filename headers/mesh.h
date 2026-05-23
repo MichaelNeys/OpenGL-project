@@ -24,6 +24,7 @@ public:
     unsigned int vertexCount, stride;
 
     const std::vector<Vertex>& getVertices() const { return _vertices; }
+    const std::vector<unsigned int>& getIndices() const { return _indices; }
 
     Mesh(float* vertices, unsigned int vertexCount, bool hasNormals);
     void Draw();

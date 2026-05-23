@@ -15,6 +15,7 @@ public:
               glm::mat4& view, glm::mat4& projection, glm::vec3& cameraPos);
     void Delete();
     bool redstoneLampsOn = true;
+    void checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 cameraPos);
 
 private:
     void setLightUniforms(Shader& shader);
@@ -39,4 +40,7 @@ private:
     float getTForDistance(float targetDistance);
     void  buildLUT(int lutResolution);
     std::vector<glm::vec3> pollenPositions;
+    unsigned int crosshairVAO, crosshairVBO;
+
+    std::vector<glm::vec3> redstoneLightPositions;
 };
