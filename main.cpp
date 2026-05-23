@@ -58,6 +58,20 @@ int main() {
             glfwSetWindowShouldClose(window, true);
         camera.ProcessKeyboard(window, deltaTime);
 
+        static bool rKeyPressed = false;
+
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+            // Als hij is ingedrukt, en hij was de vorige frame nog NIET ingedrukt
+            if (!rKeyPressed) {
+                // Draai de schakelaar om (van true naar false of andersom)
+                scene.redstoneLampsOn = !scene.redstoneLampsOn;
+                rKeyPressed = true; // Zet op true zodat hij niet blijft flipperen
+            }
+        } else {
+            // Zodra je de knop loslaat, resetten we de beveiliging
+            rKeyPressed = false;
+        }
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         // depth buffer instellen en aanzetten
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
