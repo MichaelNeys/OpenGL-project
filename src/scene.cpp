@@ -345,7 +345,7 @@ void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection,
     Village->meshes[5].Draw(*pickingShader);
 
     glReadBuffer(GL_COLOR_ATTACHMENT0);
-    unsigned char pixel[3];
+    unsigned char pixel[4];
     glReadPixels(screenWidth / 2, screenHeight / 2, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
