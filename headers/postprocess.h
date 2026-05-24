@@ -11,9 +11,9 @@ enum class PostEffect {
 class PostProcessor {
 public:
     PostProcessor(int width, int height);
-    void Bind();           // begin scene renderen naar FBO
-    void Unbind();         // stop renderen naar FBO
-    void Draw();           // render quad met effect
+    void Bind(); 
+    void Unbind();
+    void Draw();
     void DrawFromTexture(unsigned int texture);
     void Delete();
     void setEffect(PostEffect effect) { currentEffect = effect; }

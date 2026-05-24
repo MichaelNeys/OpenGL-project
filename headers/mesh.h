@@ -16,7 +16,6 @@ public:
     struct Texture {
         unsigned int id;
         std::string  type;  
-        // "texture_diffuse" of "texture_normal"
         std::string  path;
     };
 
@@ -32,14 +31,13 @@ public:
 
     // Nieuwe constructor
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
-    void Draw(Shader& shader);  // overload voor model-rendering
+    void Draw(Shader& shader);
     void DeleteModel();
 
 private:
-    // alleen gebruikt door model-constructor
     unsigned int EBO;
-    std::vector<Vertex>       _vertices;
+    std::vector<Vertex> _vertices;
     std::vector<unsigned int> _indices;
-    std::vector<Texture>      _textures;
+    std::vector<Texture> _textures;
     void setupModelMesh();
 };

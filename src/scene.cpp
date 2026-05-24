@@ -56,9 +56,9 @@ void Scene::initPollen() {
     const int amountOfPollen = 6000;
 
     for (int i = 0; i < amountOfPollen; i++) {
-        float     targetDist = (beePath.getTotalLength() / amountOfPollen) * i;
-        float     t          = beePath.getTForDistance(targetDist);
-        glm::vec3 basePos    = beePath.getPoint(t);
+        float targetDist = (beePath.getTotalLength() / amountOfPollen) * i;
+        float t = beePath.getTForDistance(targetDist);
+        glm::vec3 basePos = beePath.getPoint(t);
 
         const float radius = 0.025f;
         float randX = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
@@ -105,8 +105,7 @@ void Scene::initCrosshair() {
 
     glBindVertexArray(crosshairVAO);
     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Geometry::crosshairVertices),
-                 Geometry::crosshairVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Geometry::crosshairVertices), Geometry::crosshairVertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -139,19 +138,19 @@ void Scene::initPickingFBO() {
 
 void Scene::setLightUniforms(Shader& shader) {
     shader.setVec3("light.position", lightPos);
-    shader.setVec3("light.ambient",  glm::vec3(0.08f, 0.08f, 0.15f));
-    shader.setVec3("light.diffuse",  glm::vec3(0.25f, 0.25f, 0.35f));
+    shader.setVec3("light.ambient", glm::vec3(0.08f, 0.08f, 0.15f));
+    shader.setVec3("light.diffuse", glm::vec3(0.25f, 0.25f, 0.35f));
     shader.setVec3("light.specular", glm::vec3(0.1f,  0.1f,  0.1f));
 
-    const glm::vec3 ambientON  = glm::vec3(0.05f, 0.02f, 0.0f);
-    const glm::vec3 diffuseON  = glm::vec3(0.5f,  0.3f,  0.1f);
+    const glm::vec3 ambientON = glm::vec3(0.05f, 0.02f, 0.0f);
+    const glm::vec3 diffuseON = glm::vec3(0.5f,  0.3f,  0.1f);
     const glm::vec3 specularON = glm::vec3(1.0f,  0.8f,  0.5f);
-    const glm::vec3 colorOFF   = glm::vec3(0.0f);
+    const glm::vec3 colorOFF = glm::vec3(0.0f);
 
     for (int i = 0; i < Geometry::numPointLights; i++) {
         shader.setVec3(u_plPos[i], Geometry::pointLightPositions[i]);
 
-        bool      isStationLamp = (i == 6 || i == 7);
+        bool isStationLamp = (i == 6 || i == 7);
         glm::vec3 amb, dif, spe;
 
         if (redstoneLampsOn) {
@@ -162,9 +161,9 @@ void Scene::setLightUniforms(Shader& shader) {
             amb = dif = spe = colorOFF;
         }
 
-        shader.setVec3 (u_plAmb[i],   amb);
-        shader.setVec3 (u_plDif[i],   dif);
-        shader.setVec3 (u_plSpe[i],   spe);
+        shader.setVec3(u_plAmb[i],   amb);
+        shader.setVec3(u_plDif[i],   dif);
+        shader.setVec3(u_plSpe[i],   spe);
         shader.setFloat(u_plConst[i], 1.0f);
         shader.setFloat(u_plLin[i],   0.09f);
         shader.setFloat(u_plQuad[i],  0.032f);
@@ -178,11 +177,11 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
 
     lightingShader.use();
     setLightUniforms(lightingShader);
-    lightingShader.setVec3("viewPos",           cameraPos);
-    lightingShader.setMat4("view",              view);
-    lightingShader.setMat4("projection",        projection);
+    lightingShader.setVec3("viewPos", cameraPos);
+    lightingShader.setMat4("view", view);
+    lightingShader.setMat4("projection", projection);
     lightingShader.setBool("hasDiffuseTexture", false);
-    lightingShader.setInt ("texture_diffuse1",  0);
+    lightingShader.setInt ("texture_diffuse1", 0);
 
     terrain->Draw(lightingShader);
     drawVillage(lightingShader, lampShader, view, projection);
@@ -200,7 +199,7 @@ void Scene::drawVillage(Shader& lightingShader, Shader& lampShader,
     glDisable(GL_CULL_FACE);
 
     // Houd bij welke shader actief is zodat we geen onnodige use()-calls doen
-    bool lampActive  = false;
+    bool lampActive = false;
     bool lightActive = false;
 
     for (unsigned int i = 0; i < Village->meshes.size(); i++) {
@@ -209,23 +208,23 @@ void Scene::drawVillage(Shader& lightingShader, Shader& lampShader,
         if (useLamp) {
             if (!lampActive) {
                 lampShader.use();
-                lampShader.setMat4("model",      m_villageMatrix);
-                lampShader.setMat4("view",       view);
+                lampShader.setMat4("model", m_villageMatrix);
+                lampShader.setMat4("view", view);
                 lampShader.setMat4("projection", projection);
-                lampActive  = true;
+                lampActive = true;
                 lightActive = false;
             }
             Village->meshes[i].Draw(lampShader);
         } else {
             if (!lightActive) {
                 lightingShader.use();
-                lightingShader.setMat4 ("model",              m_villageMatrix);
-                lightingShader.setVec3 ("material.ambient",   glm::vec3(0.15f));
-                lightingShader.setVec3 ("material.diffuse",   glm::vec3(0.8f));
-                lightingShader.setVec3 ("material.specular",  glm::vec3(0.2f));
+                lightingShader.setMat4 ("model", m_villageMatrix);
+                lightingShader.setVec3 ("material.ambient", glm::vec3(0.15f));
+                lightingShader.setVec3 ("material.diffuse", glm::vec3(0.8f));
+                lightingShader.setVec3 ("material.specular", glm::vec3(0.2f));
                 lightingShader.setFloat("material.shininess", 10.0f);
                 lightActive = true;
-                lampActive  = false;
+                lampActive = false;
             }
             Village->meshes[i].Draw(lightingShader);
         }
@@ -239,50 +238,50 @@ void Scene::drawBee(Shader& lightingShader) {
 
     static float lastTime = (float)glfwGetTime();
     float currentTime = (float)glfwGetTime();
-    float deltaTime   = currentTime - lastTime;
+    float deltaTime = currentTime - lastTime;
     lastTime = currentTime;
 
     currentDistance += 0.8f * deltaTime;
     if (currentDistance > beePath.getTotalLength())
         currentDistance = fmod(currentDistance, beePath.getTotalLength());
 
-    float     t      = beePath.getTForDistance(currentDistance);
+    float t = beePath.getTForDistance(currentDistance);
     glm::vec3 beePos = beePath.getPoint(t);
 
-    float     tNext   = beePath.getTForDistance(currentDistance + 0.1f);
+    float tNext = beePath.getTForDistance(currentDistance + 0.1f);
     if (tNext < t) tNext = 1.0f;
     glm::vec3 nextPos = beePath.getPoint(tNext);
-    glm::vec3 dir     = glm::normalize(nextPos - beePos);
+    glm::vec3 dir = glm::normalize(nextPos - beePos);
 
     currentBeePos = beePos;
     currentBeeDir = dir;
 
     if (!showBee) return;
 
-    float yaw   = atan2(dir.x, dir.z) + glm::radians(180.0f);
+    float yaw = atan2(dir.x, dir.z) + glm::radians(180.0f);
     float pitch = atan2(dir.y, sqrt(dir.x * dir.x + dir.z * dir.z));
 
     glm::mat4 beeModel = glm::mat4(1.0f);
     beeModel = glm::translate(beeModel, beePos);
-    beeModel = glm::rotate(beeModel, yaw,   glm::vec3(0.0f, 1.0f, 0.0f));
+    beeModel = glm::rotate(beeModel, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
     beeModel = glm::rotate(beeModel, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
     beeModel = glm::scale(beeModel, glm::vec3(0.01f));
 
     lightingShader.use();
-    lightingShader.setMat4 ("model",              beeModel);
-    lightingShader.setVec3 ("material.ambient",   glm::vec3(0.10f, 0.10f, 0.10f));
-    lightingShader.setVec3 ("material.diffuse",   glm::vec3(0.35f, 0.35f, 0.38f));
-    lightingShader.setVec3 ("material.specular",  glm::vec3(0.45f, 0.45f, 0.48f));
+    lightingShader.setMat4 ("model", beeModel);
+    lightingShader.setVec3 ("material.ambient", glm::vec3(0.10f, 0.10f, 0.10f));
+    lightingShader.setVec3 ("material.diffuse", glm::vec3(0.35f, 0.35f, 0.38f));
+    lightingShader.setVec3 ("material.specular", glm::vec3(0.45f, 0.45f, 0.48f));
     lightingShader.setFloat("material.shininess", 40.0f);
     Bee->Draw(lightingShader);
 }
 
 void Scene::drawPollen(Shader& lightingShader, glm::mat4& view, glm::mat4& projection) {
     lightingShader.use();
-    lightingShader.setMat4("view",              view);
-    lightingShader.setMat4("projection",        projection);
+    lightingShader.setMat4("view", view);
+    lightingShader.setMat4("projection", projection);
     lightingShader.setBool("hasDiffuseTexture", false);
-    lightingShader.setVec3("fallbackColor",     glm::vec3(1.0f, 0.8f, 0.2f));
+    lightingShader.setVec3("fallbackColor", glm::vec3(1.0f, 0.8f, 0.2f));
 
     glDisable(GL_CULL_FACE);
 
@@ -298,11 +297,11 @@ void Scene::drawCrosshair(Shader& lampShader) {
     glDisable(GL_DEPTH_TEST);
 
     lampShader.use();
-    lampShader.setMat4("model",             glm::mat4(1.0f));
-    lampShader.setMat4("view",              glm::mat4(1.0f));
-    lampShader.setMat4("projection",        glm::mat4(1.0f));
+    lampShader.setMat4("model", glm::mat4(1.0f));
+    lampShader.setMat4("view", glm::mat4(1.0f));
+    lampShader.setMat4("projection", glm::mat4(1.0f));
     lampShader.setBool("hasDiffuseTexture", false);
-    lampShader.setVec3("fallbackColor",     glm::vec3(1.0f, 1.0f, 1.0f));
+    lampShader.setVec3("fallbackColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
     glLineWidth(3.0f);
     glBindVertexArray(crosshairVAO);
@@ -327,7 +326,7 @@ void Scene::Delete() {
     delete lampMesh;
 
     if (Village) { Village->Delete(); delete Village; }
-    if (Bee)     { Bee->Delete();     delete Bee;     }
+    if (Bee) { Bee->Delete(); delete Bee; }
 }
 
 void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection,
@@ -339,9 +338,9 @@ void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection,
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     pickingShader->use();
-    pickingShader->setMat4("view",         view);
-    pickingShader->setMat4("projection",   projection);
-    pickingShader->setMat4("model",        m_villageMatrix);
+    pickingShader->setMat4("view", view);
+    pickingShader->setMat4("projection", projection);
+    pickingShader->setMat4("model", m_villageMatrix);
     pickingShader->setVec3("pickingColor", glm::vec3(1.0f, 0.0f, 0.0f));
     Village->meshes[5].Draw(*pickingShader);
 

@@ -5,20 +5,20 @@
 
 static float planeVerts[] = {
     // positie (x,y,z)      texcoords (u,v)
-    -0.5f,  0.5f, 0.0f,    0.0f, 0.0f,
+    -0.5f, 0.5f, 0.0f,    0.0f, 0.0f,
     -0.5f, -0.5f, 0.0f,    0.0f, 1.0f,
      0.5f, -0.5f, 0.0f,    1.0f, 1.0f,
 
-    -0.5f,  0.5f, 0.0f,    0.0f, 0.0f,
+    -0.5f, 0.5f, 0.0f,    0.0f, 0.0f,
      0.5f, -0.5f, 0.0f,    1.0f, 1.0f,
-     0.5f,  0.5f, 0.0f,    1.0f, 0.0f
+     0.5f, 0.5f, 0.0f,    1.0f, 0.0f
 };
 
 BluePlane::BluePlane(const char* overlayImagePath, glm::vec3 position, glm::vec2 size)
     : position(position), size(size)
 {
     setupPlane();
-    planeShader    = new Shader("shaders/bluePlane.vert", "shaders/bluePlane.frag");
+    planeShader = new Shader("shaders/bluePlane.vert", "shaders/bluePlane.frag");
     overlayTexture = loadTexture(overlayImagePath);
 }
 
@@ -75,10 +75,8 @@ unsigned int BluePlane::loadTexture(const char* path) {
 void BluePlane::DrawPlane(glm::mat4& view, glm::mat4& projection) {
     if (!enabled) return;
 
-    float aspectRatio = (imageHeight > 0) 
-                        ? (float)imageWidth / (float)imageHeight 
-                        : 1.0f;
-    float planeWidth  = size.y * aspectRatio;
+    float aspectRatio = (imageHeight > 0) ? (float)imageWidth / (float)imageHeight : 1.0f;
+    float planeWidth = size.y * aspectRatio;
     float planeHeight = size.y;
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -87,11 +85,11 @@ void BluePlane::DrawPlane(glm::mat4& view, glm::mat4& projection) {
     model = glm::scale(model, glm::vec3(planeWidth, planeHeight, 1.0f));
 
     planeShader->use();
-    planeShader->setMat4("model",         model);
-    planeShader->setMat4("view",          view);
-    planeShader->setMat4("projection",    projection);
+    planeShader->setMat4("model", model);
+    planeShader->setMat4("view", view);
+    planeShader->setMat4("projection", projection);
     planeShader->setInt ("overlayTexture", 0);
-    planeShader->setBool("showOverlay",   showOverlay && textureLoaded);
+    planeShader->setBool("showOverlay", showOverlay && textureLoaded);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, overlayTexture);

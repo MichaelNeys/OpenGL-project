@@ -3,12 +3,12 @@
 
 static float quadVertices[] = {
     // pos      // texcoords
-    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, 1.0f,   0.0f, 1.0f,
     -1.0f, -1.0f,  0.0f, 0.0f,
      1.0f, -1.0f,  1.0f, 0.0f,
-    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, 1.0f,   0.0f, 1.0f,
      1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f, 1.0f
+     1.0f, 1.0f,   1.0f, 1.0f
 };
 
 PostProcessor::PostProcessor(int width, int height)
@@ -26,7 +26,7 @@ PostProcessor::PostProcessor(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
 
-    // Renderbuffer voor depth+stencil
+    // Renderbuffer voor depth en stencil
     glGenRenderbuffers(1, &RBO);
     glBindRenderbuffer(GL_RENDERBUFFER, RBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);

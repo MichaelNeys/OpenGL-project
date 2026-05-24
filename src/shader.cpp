@@ -23,7 +23,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     fShaderStream << fShaderFile.rdbuf();
     vShaderFile.close();
     fShaderFile.close();
-    vertexCode   = vShaderStream.str();
+    vertexCode = vShaderStream.str();
     fragmentCode = fShaderStream.str();
 
     const char* vShaderCode = vertexCode.c_str();

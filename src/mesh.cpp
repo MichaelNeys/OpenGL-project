@@ -69,9 +69,7 @@ void Mesh::Draw(Shader& shader) {
         if (name == "texture_diffuse") {
             hasDiffuse = true;
         }
-        std::string number = (name == "texture_diffuse")
-                           ? std::to_string(diffuseNr++)
-                           : std::to_string(normalNr++);
+        std::string number = (name == "texture_diffuse") ? std::to_string(diffuseNr++) : std::to_string(normalNr++);
         shader.setInt(name + number, i);
         glBindTexture(GL_TEXTURE_2D, _textures[i].id);
     }

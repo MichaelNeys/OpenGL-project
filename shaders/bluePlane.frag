@@ -6,7 +6,6 @@ out vec4 FragColor;
 uniform sampler2D overlayTexture;
 uniform bool      showOverlay;
 
-// YCbCr chroma keying functies
 vec3 RGBtoYCbCr(vec3 rgb) {
     float Y  =  0.299  * rgb.r + 0.587  * rgb.g + 0.114  * rgb.b;
     float Cb = -0.1687 * rgb.r - 0.3313 * rgb.g + 0.5    * rgb.b + 0.5;
@@ -23,7 +22,6 @@ void main() {
 
     vec4 texColor = texture(overlayTexture, TexCoords);
 
-    // Chroma keying: verwijder blauwe pixels
     vec3 chromaColor  = vec3(0.0, 0.0, 1.0);
     vec3 pixelYCbCr   = RGBtoYCbCr(texColor.rgb);
     vec3 chromaYCbCr  = RGBtoYCbCr(chromaColor);

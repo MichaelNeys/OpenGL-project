@@ -5,9 +5,9 @@
 class Bloom {
 public:
     Bloom(int width, int height);
-    void bindScene();        // stap 1: render scene hierin
-    void process();          // stap 2+3: extract bright + blur
-    void render();           // stap 4: combineer en teken op scherm
+    void bindScene();
+    void process();
+    void render();
     void Delete();
     unsigned int getResultTexture() const;
 
@@ -30,11 +30,10 @@ private:
     unsigned int quadVAO, quadVBO;
 
     Shader* brightExtractShader = nullptr;
-    Shader* blurShader          = nullptr;
-    Shader* combineShader       = nullptr;
+    Shader* blurShader = nullptr;
+    Shader* combineShader = nullptr;
 
-    void setupFBO(unsigned int& fbo, unsigned int& tex,
-                  unsigned int& rbo, bool withDepth);
+    void setupFBO(unsigned int& fbo, unsigned int& tex, unsigned int& rbo, bool withDepth);
     void setupPingpong(unsigned int& fbo, unsigned int& tex);
     void renderQuad();
 };

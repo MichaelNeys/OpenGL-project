@@ -9,7 +9,6 @@ void main() {
     vec3 color = texture(screenTexture, TexCoords).rgb;
     float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
 
-    // Alleen pixels die ECHT veel helderder zijn dan de threshold
     float excess = max(brightness - threshold, 0.0);
     float factor = excess / (excess + 0.1); // zachte overgang
 

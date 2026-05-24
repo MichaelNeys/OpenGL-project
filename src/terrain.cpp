@@ -24,7 +24,7 @@ static void appendTopFace(std::vector<float>& out, float cx, float cy, float cz)
 // Zijkant richting +X (rechts)
 static void appendFacePX(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
     const float h = 0.5f;
-    float top    = cy + h;
+    float top = cy + h;
     float bottom = neighborY + h;
     float face[] = {
         cx+h, top, cz+h, 1,0,0, 0,0,
@@ -41,7 +41,7 @@ static void appendFacePX(std::vector<float>& out, float cx, float cy, float cz, 
 // Zijkant richting -X (links)
 static void appendFaceNX(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
     const float h = 0.5f;
-    float top    = cy + h;
+    float top = cy + h;
     float bottom = neighborY + h;
     float face[] = {
         cx-h, top, cz-h, -1,0,0, 0,0,

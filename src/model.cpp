@@ -36,9 +36,9 @@ void Model::processNode(aiNode* node, const aiScene* scene) {
 }
 
 Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
-    std::vector<Mesh::Vertex>       vertices;
-    std::vector<unsigned int>       indices;
-    std::vector<Mesh::Texture>      textures;
+    std::vector<Mesh::Vertex> vertices;
+    std::vector<unsigned int> indices;
+    std::vector<Mesh::Texture> textures;
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Mesh::Vertex v;
@@ -48,9 +48,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
         } else {
             v.Normal = { 0.0f, 1.0f, 0.0f };
         }
-        v.TexCoords = mesh->mTextureCoords[0]
-            ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y)
-            : glm::vec2(0.0f);
+        v.TexCoords = mesh->mTextureCoords[0] ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : glm::vec2(0.0f);
         vertices.push_back(v);
     }
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
@@ -59,8 +57,8 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
-        auto diff = loadMaterialTextures(mat, aiTextureType_DIFFUSE,  "texture_diffuse");
-        auto norm = loadMaterialTextures(mat, aiTextureType_NORMALS,  "texture_normal");
+        auto diff = loadMaterialTextures(mat, aiTextureType_DIFFUSE, "texture_diffuse");
+        auto norm = loadMaterialTextures(mat, aiTextureType_NORMALS, "texture_normal");
         textures.insert(textures.end(), diff.begin(), diff.end());
         textures.insert(textures.end(), norm.begin(), norm.end());
     }
@@ -84,12 +82,12 @@ std::vector<Mesh::Texture> Model::loadMaterialTextures(
         if (!skip) {
             Mesh::Texture tex;
 
-            // Check of het een embedded textuur is (begint met '*')
+            // checken op embedded textures
             if (str.C_Str()[0] == '*') {
                 int index = std::atoi(str.C_Str() + 1);
-                tex.id   = textureFromEmbedded(_scene, index);  
+                tex.id = textureFromEmbedded(_scene, index);  
             } else {
-                tex.id   = textureFromFile(directory + "/" + str.C_Str());
+                tex.id = textureFromFile(directory + "/" + str.C_Str());
             }
 
             tex.type = typeName;

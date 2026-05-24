@@ -11,7 +11,6 @@ struct Light {
     vec3 specular;
 };
 
-// Structuur voor een Lantaarn (Point Light)
 struct PointLight {
     vec3 position;
 
@@ -25,7 +24,6 @@ struct PointLight {
     vec3 specular;
 };
 
-// Bepaal hoeveel lantaarns je maximaal wilt ondersteunen (bijv. 4)
 #define NR_POINT_LIGHTS 18
 
 uniform Light light;
@@ -34,7 +32,6 @@ uniform vec3 viewPos;
 uniform sampler2D texture_diffuse1;
 uniform bool hasDiffuseTexture;
 uniform vec3 fallbackColor;
-// Albedo als er geen diffuse-texture is (grond, eenvoudige meshes)
 uniform vec3 flatAlbedo;
 
 // Functiedeclaratie voor het berekenen van 1 lantaarn
@@ -51,7 +48,7 @@ void main() {
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    // 1. Basislicht berekenen (Het maanlicht)
+    // Basislicht berekenen (maanlicht)
     vec3 ambient = light.ambient * albedo;
     vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
@@ -62,7 +59,7 @@ void main() {
     
     vec3 result = ambient + diffuse + specular;
 
-    // 2. Lantaarns toevoegen aan het resultaat!
+    // Lantaarns toevoegen aan het resultaat
     for(int i = 0; i < NR_POINT_LIGHTS; i++) {
         result += CalcPointLight(pointLights[i], norm, FragPos, viewDir, albedo);    
     }
@@ -70,7 +67,7 @@ void main() {
     FragColor = vec4(result, texColor.a);
 }
 
-// De wiskunde voor het uitstralen en afzwakken van lantaarnlicht
+// wiskunde voor uitstralen en afzwakken van lantaarnlicht
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 albedo)
 {
     vec3 lightDir = normalize(light.position - fragPos);

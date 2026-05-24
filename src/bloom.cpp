@@ -2,12 +2,12 @@
 #include <iostream>
 
 static float quadVerts[] = {
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  0.0f, 0.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-    -1.0f,  1.0f,  0.0f, 1.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f, 1.0f
+    -1.0f, 1.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f, 0.0f,
+     1.0f, -1.0f, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0.0f, 1.0f,
+     1.0f, -1.0f, 1.0f, 0.0f,
+     1.0f, 1.0f, 1.0f, 1.0f
 };
 
 Bloom::Bloom(int width, int height) : width(width), height(height) {
@@ -74,7 +74,7 @@ void Bloom::bindScene() {
 }
 
 void Bloom::process() {
-    // --- Stap 2: Brightness extraction ---
+    // Brightness extraction
     // Haal alleen heldere pixels eruit en schrijf naar pingpong[0]
     glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[0]);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -87,9 +87,9 @@ void Bloom::process() {
     glBindTexture(GL_TEXTURE_2D, sceneTexture);
     renderQuad();
 
-    // --- Stap 3: Gaussian blur via ping-pong ---
-    // We doen meerdere passes: eerst horizontaal, dan verticaal, etc.
-    this->blurPasses = 15; // meer passes = zachter/groter bloom
+    // Gaussian blur via ping-pong
+    // meerdere passes: eerst horizontaal, dan verticaal
+    this->blurPasses = 15;
     bool horizontal = true;
 
     blurShader->use();
@@ -114,7 +114,7 @@ void Bloom::render() {
     glDisable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // --- Stap 4: Combineer originele scene + geblurde bloom ---
+    // Combineer originele scene + geblurde bloom
     combineShader->use();
     combineShader->setInt("scene",   0);
     combineShader->setInt("bloomBlur", 1);
@@ -124,7 +124,7 @@ void Bloom::render() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sceneTexture);
     glActiveTexture(GL_TEXTURE1);
-    // Na even aantal passes zit het resultaat in pingpong[0]
+
     int finalIndex = (blurPasses % 2 == 0) ? 0 : 1;
     glBindTexture(GL_TEXTURE_2D, pingpongTexture[finalIndex]);
 

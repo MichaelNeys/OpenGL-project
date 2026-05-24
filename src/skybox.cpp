@@ -33,8 +33,7 @@ unsigned int Skybox::loadCubemap(const std::vector<std::string>& faces) {
         unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
         if (data) {
             std::cout << "  OK " << width << "x" << height << std::endl;
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
             stbi_image_free(data);
         } else {
             std::cerr << "Cubemap tex failed: " << faces[i] << std::endl;
@@ -59,7 +58,7 @@ void Skybox::Draw(const glm::mat4& view, const glm::mat4& projection) {
     glDisable(GL_CULL_FACE);
 
     shader->use();
-    // Verwijder translatie zodat skybox altijd om de camera heen zit
+    // ervoor zorgen dat skybox altijd zichtbaar is (rond camera zit)
     glm::mat4 skyView = glm::mat4(glm::mat3(view));
     shader->setMat4("view", skyView);
     shader->setMat4("projection", projection);
