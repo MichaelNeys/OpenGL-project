@@ -184,7 +184,10 @@ void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor
     // Bee camera togglen (C)
     static bool cWasPressed = false;
     bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
-    if (cPressed && !cWasPressed) beeCamera = !beeCamera;
+    if (cPressed && !cWasPressed) {
+        beeCamera = !beeCamera;
+        scene.showBee = !beeCamera;
+    }
     cWasPressed = cPressed;
 
     // Bloom togglen (B)
