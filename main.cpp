@@ -153,10 +153,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     lastX = xpos; lastY = ypos;
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
+
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     if (!isMouseCaptured) return;
     camera.ProcessMouseScroll(yoffset);
 }
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     screenWidth = width;
