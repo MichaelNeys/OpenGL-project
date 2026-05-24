@@ -82,7 +82,7 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 300.0f);
 
-    // tekenen van objecten en postprocesser en bloom renderen
+        // tekenen van objecten en postprocesser en bloom renderen
         static bool leftMousePressed = false;
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
             if (!leftMousePressed) {
@@ -91,6 +91,21 @@ int main() {
             }
         } else {
             leftMousePressed = false;
+        }
+
+        // Bee first person camera
+        static bool beeCamera = false;
+        static bool cWasPressed = false;
+        bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
+        if (cPressed && !cWasPressed) beeCamera = !beeCamera;
+        cWasPressed = cPressed;
+
+        if (beeCamera) {
+            glm::vec3 beePos = scene.getBeePosition();
+            glm::vec3 beeDir = scene.getBeeDirection();
+            view = glm::lookAt(beePos, beePos + beeDir, glm::vec3(0.0f, 1.0f, 0.0f));
+        } else {
+            view = camera.GetViewMatrix();
         }
 
         bloom.bindScene();

@@ -21,20 +21,23 @@ glm::mat4 Camera::GetViewMatrix() {
 
 void Camera::ProcessKeyboard(GLFWwindow* window, float deltaTime) {
     float velocity = MovementSpeed * deltaTime;
+    glm::vec3 flatFront = glm::normalize(glm::vec3(Front.x, 0.0f, Front.z));
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        Position += Front * velocity;
+        Position += flatFront * velocity;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        Position -= Front * velocity;
+        Position -= flatFront * velocity;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         Position -= Right * velocity;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         Position += Right * velocity;
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        Position += Up * velocity;
+        Position.y += velocity;
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        Position -= Up * velocity;
+        Position.y -= velocity;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        Position += Front;
+        MovementSpeed = 10.0f;
+    else
+        MovementSpeed = 2.5f;
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset) {

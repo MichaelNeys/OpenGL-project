@@ -16,6 +16,8 @@ public:
     void Delete();
     bool redstoneLampsOn = true;
     void checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 cameraPos);
+    glm::vec3 getBeePosition() const { return currentBeePos; }
+    glm::vec3 getBeeDirection() const { return currentBeeDir; }
 
 private:
     void setLightUniforms(Shader& shader);
@@ -43,4 +45,7 @@ private:
     unsigned int crosshairVAO, crosshairVBO;
 
     std::vector<glm::vec3> redstoneLightPositions;
+
+    glm::vec3 currentBeePos;
+    glm::vec3 currentBeeDir;
 };

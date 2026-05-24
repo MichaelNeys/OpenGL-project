@@ -287,7 +287,6 @@ void Scene::setLightUniforms(Shader& shader) {
 void Scene::Draw(Shader& lightingShader, Shader& lampShader,
                  glm::mat4& view, glm::mat4& projection,
                  glm::vec3& cameraPos) {
-
     // Skybox
     skybox->Draw(view, projection);
 
@@ -360,6 +359,8 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
         if (tNext < t) tNext = 1.0f;
         glm::vec3 nextPos = calculateBezierPoint(tNext, m_controlPoints);
         glm::vec3 dir     = glm::normalize(nextPos - beePos);
+        currentBeePos = beePos;
+        currentBeeDir = dir;
 
         float yaw   = atan2(dir.x, dir.z) + glm::radians(180.0f);
         float pitch = atan2(dir.y, sqrt(dir.x*dir.x + dir.z*dir.z));
