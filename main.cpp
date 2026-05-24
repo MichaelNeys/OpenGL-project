@@ -115,7 +115,7 @@ int main() {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                     firstMouse = true;
                 } else {
-                    scene.checkMouseClick(view, projection, camera.Position);
+                    scene.checkMouseClick(view, projection, screenWidth, screenHeight);
                 }
             }
         } else {

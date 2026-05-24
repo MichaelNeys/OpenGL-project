@@ -18,13 +18,19 @@ public:
     
     // interactie
     bool redstoneLampsOn = true;
-    void checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 cameraPos);
+    void checkMouseClick(glm::mat4 view, glm::mat4 projection, int screenWidth, int screenHeight);
     
     // camera getters
     glm::vec3 getBeePosition() const { return currentBeePos; }
     glm::vec3 getBeeDirection() const { return currentBeeDir; }
 
 private:
+    // init helpers
+    void initModels();
+    void initPollen();
+    void initCrosshair();
+    void initPickingFBO();
+
     // hulp functies
     void setLightUniforms(Shader& shader);
     void drawVillage(Shader& lightingShader, Shader& lampShader, glm::mat4& view, glm::mat4& projection);
@@ -54,4 +60,6 @@ private:
 
     // UI elementen
     unsigned int crosshairVAO, crosshairVBO;
+    unsigned int pickingFBO, pickingColorTexture, pickingDepthRBO;
+    Shader* pickingShader = nullptr;
 };

@@ -12,11 +12,8 @@
 Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     unsigned int vertexCount = 216;
     lampMesh = new Mesh(const_cast<float*>(Geometry::cubeVertices), vertexCount, true);
-
-    // Terrain
     terrain = new Terrain();
 
-    // Skybox
     std::vector<std::string> skyFaces = {
         "../models/indigo-re-skybox/indigo_ft.jpg",
         "../models/indigo-re-skybox/indigo_bk.jpg",
@@ -27,7 +24,20 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     };
     skybox = new Skybox(skyFaces, "../shaders/skybox.vert", "../shaders/skybox.frag");
 
-    // willekeurige posities
+    // vaste matrixen
+    m_villageMatrix = glm::mat4(1.0f);
+    m_villageMatrix = glm::translate(m_villageMatrix, glm::vec3(0.0f, -3.0f, -10.0f));
+    m_villageMatrix = glm::rotate(m_villageMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    m_villageMatrix = glm::scale(m_villageMatrix, glm::vec3(5.0f));
+
+    // helper initialisators
+    initModels();
+    initPollen();
+    initCrosshair();
+    initPickingFBO();
+}
+
+void Scene::initPollen() {
     srand((unsigned)time(NULL));
 
     // aantal pollen
@@ -46,7 +56,6 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
 
         glm::vec3 finalPos = basePos + glm::vec3(randX, randY, randZ);
 
-        // Bereken hier alvast de matrix!
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, finalPos);
         model = glm::rotate(model, finalPos.x * 15.0f, glm::vec3(1.0f, 0.5f, 0.2f)); 
@@ -55,7 +64,9 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
 
         pollenMatrices.push_back(model);
     }
+}
 
+void Scene::initModels() {
     // Village
     for (const std::string& base : {"models/Minecraft ville", "../models/Minecraft ville"}) {
         std::string path = base + "/minecraft_ville.glb";
@@ -77,7 +88,9 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
         }
     }
     if (!Bee) std::cerr << "Bee model niet gevonden!" << std::endl;
-    
+}
+
+void Scene::initCrosshair() {
     glGenVertexArrays(1, &crosshairVAO);
     glGenBuffers(1, &crosshairVBO);
 
@@ -97,11 +110,25 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
+}
 
-    m_villageMatrix = glm::mat4(1.0f);
-    m_villageMatrix = glm::translate(m_villageMatrix, glm::vec3(0.0f, -3.0f, -10.0f));
-    m_villageMatrix = glm::rotate(m_villageMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    m_villageMatrix = glm::scale(m_villageMatrix, glm::vec3(5.0f));
+void Scene::initPickingFBO() {
+    pickingShader = new Shader("shaders/picking.vert", "shaders/picking.frag");
+
+    glGenFramebuffers(1, &pickingFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
+
+    glGenTextures(1, &pickingColorTexture);
+    glBindTexture(GL_TEXTURE_2D, pickingColorTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pickingColorTexture, 0);
+
+    glGenRenderbuffers(1, &pickingDepthRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, pickingDepthRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1920, 1080);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, pickingDepthRBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Scene::setLightUniforms(Shader& shader) {
@@ -152,6 +179,31 @@ void Scene::setLightUniforms(Shader& shader) {
         shader.setFloat("pointLights[" + n + "].linear",    0.09f);
         shader.setFloat("pointLights[" + n + "].quadratic", 0.032f);
     }
+}
+
+void Scene::Draw(Shader& lightingShader, Shader& lampShader,
+                 glm::mat4& view, glm::mat4& projection,
+                 glm::vec3& cameraPos) {
+    // Skybox
+    skybox->Draw(view, projection);
+
+    // Lighting setup
+    lightingShader.use();
+    setLightUniforms(lightingShader);
+    lightingShader.setVec3("viewPos", cameraPos);
+    lightingShader.setMat4("view", view);
+    lightingShader.setMat4("projection", projection);
+    lightingShader.setBool("hasDiffuseTexture", false);
+    lightingShader.setInt("texture_diffuse1", 0);
+
+    // Terrein
+    terrain->Draw(lightingShader);
+    drawVillage(lightingShader, lampShader, view, projection);
+
+    drawBee(lightingShader);
+    drawPollen(lightingShader, view, projection);
+
+    drawCrosshair(lightingShader);
 }
 
 void Scene::drawVillage(Shader &lightingShader, Shader &lampShader, glm::mat4 &view, glm::mat4 &projection)
@@ -272,31 +324,6 @@ void Scene::drawCrosshair(Shader &lightingShader)
     glEnable(GL_DEPTH_TEST);
 }
 
-void Scene::Draw(Shader& lightingShader, Shader& lampShader,
-                 glm::mat4& view, glm::mat4& projection,
-                 glm::vec3& cameraPos) {
-    // Skybox
-    skybox->Draw(view, projection);
-
-    // Lighting setup
-    lightingShader.use();
-    setLightUniforms(lightingShader);
-    lightingShader.setVec3("viewPos", cameraPos);
-    lightingShader.setMat4("view", view);
-    lightingShader.setMat4("projection", projection);
-    lightingShader.setBool("hasDiffuseTexture", false);
-    lightingShader.setInt("texture_diffuse1", 0);
-
-    // Terrein
-    terrain->Draw(lightingShader);
-    drawVillage(lightingShader, lampShader, view, projection);
-
-    drawBee(lightingShader);
-    drawPollen(lightingShader, view, projection);
-
-    drawCrosshair(lightingShader);
-}
-
 void Scene::Delete() {
     skybox->Delete();
     delete skybox;
@@ -315,59 +342,39 @@ void Scene::Delete() {
     if (Bee)     { Bee->Delete();     delete Bee;     }
 }
 
-// Helper functie: Test of een straal (laser) een specifieke 3D-driehoek doorboort
-bool rayIntersectsTriangle(glm::vec3 rayOrigin, glm::vec3 rayDir, glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
-    const float EPSILON = 0.0000001f;
-    glm::vec3 edge1 = v1 - v0;
-    glm::vec3 edge2 = v2 - v0;
-    glm::vec3 h = glm::cross(rayDir, edge2);
-    float a = glm::dot(edge1, h);
+void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, int screenWidth, int screenHeight) {
+    if (!Village) return;
+    glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
     
-    if (a > -EPSILON && a < EPSILON) return false; // Straal loopt parallel aan de driehoek
+    // Maak het "scherm" helemaal zwart (ID = 0)
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    float f = 1.0f / a;
-    glm::vec3 s = rayOrigin - v0;
-    float u = f * glm::dot(s, h);
-    if (u < 0.0f || u > 1.0f) return false;
+    // 2. Teken ALLEEN de objecten waar we op kunnen klikken
+    pickingShader->use();
+    pickingShader->setMat4("view", view);
+    pickingShader->setMat4("projection", projection);
+    pickingShader->setMat4("model", m_villageMatrix);
+    
+    // redstone lamp de kleur rood geven
+    pickingShader->setVec3("pickingColor", glm::vec3(1.0f, 0.0f, 0.0f));
+    
+    // mesh 5 = redstone lampen
+    Village->meshes[5].Draw(*pickingShader);
 
-    glm::vec3 q = glm::cross(s, edge1);
-    float v = f * glm::dot(rayDir, q);
-    if (v < 0.0f || u + v > 1.0f) return false;
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    unsigned char pixel[3];
+    glReadPixels(screenWidth / 2, screenHeight / 2, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
 
-    float t = f * glm::dot(edge2, q);
-    if (t > EPSILON) return true; // Raak! We hebben de driehoek geraakt.
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    return false;
-}
-
-void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 cameraPos) {
-    if (Village == nullptr || Village->meshes.size() <= 5) return;
-
-    // 1. Omdat we een FPS camera hebben, schieten we ALTIJD door het exacte midden (0.0f, 0.0f)!
-    glm::vec4 ray_clip = glm::vec4(0.0f, 0.0f, -1.0f, 1.0f);
-    glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
-    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f); 
-    glm::vec3 ray_wor = glm::normalize(glm::vec3(glm::inverse(view) * ray_eye));
-
-    // 3. Haal de punten en de driehoeken van de Redstone Lampen op (Index 5)
-    const std::vector<Mesh::Vertex>& verts = Village->meshes[5].getVertices();
-    const std::vector<unsigned int>& indices = Village->meshes[5].getIndices();
-
-    // check of we raak schieten
-    for (size_t i = 0; i < indices.size(); i += 3) {
-        glm::vec3 v0 = verts[indices[i]].Position;
-        glm::vec3 v1 = verts[indices[i+1]].Position;
-        glm::vec3 v2 = verts[indices[i+2]].Position;
-
-        v0 = glm::vec3(m_villageMatrix * glm::vec4(v0, 1.0f));
-        v1 = glm::vec3(m_villageMatrix * glm::vec4(v1, 1.0f));
-        v2 = glm::vec3(m_villageMatrix * glm::vec4(v2, 1.0f));
-
-        if (rayIntersectsTriangle(cameraPos, ray_wor, v0, v1, v2)) {
-            redstoneLampsOn = !redstoneLampsOn;
-            std::cout << "Redstone Lamp geraakt met kruisje! Status: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
-            break; 
-        }
+    // 5. Kijk wat we hebben geraakt!
+    // pixel[0] is Rood, pixel[1] is Groen, pixel[2] is Blauw
+    if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0) {
+        // We hebben ROOD geraakt!
+        redstoneLampsOn = !redstoneLampsOn;
+        std::cout << "Redstone Lamp ge-PICKED! Status: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
+    } else {
+        std::cout << "Mis! We raakten kleur: " << (int)pixel[0] << "," << (int)pixel[1] << "," << (int)pixel[2] << std::endl;
     }
 }
-
