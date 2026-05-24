@@ -203,7 +203,7 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
     drawBee(lightingShader);
     drawPollen(lightingShader, view, projection);
 
-    drawCrosshair(lightingShader);
+    drawCrosshair(lampShader);
 }
 
 void Scene::drawVillage(Shader &lightingShader, Shader &lampShader, glm::mat4 &view, glm::mat4 &projection)
@@ -303,26 +303,25 @@ void Scene::drawPollen(Shader& lightingShader, glm::mat4& view, glm::mat4& proje
     glEnable(GL_CULL_FACE);
 }
 
-void Scene::drawCrosshair(Shader &lightingShader)
-{
+void Scene::drawCrosshair(Shader &lampShader) {
     glDisable(GL_DEPTH_TEST);
     
-    lightingShader.use(); 
+    lampShader.use(); 
     
-    // 2. MAGIE: Door de matrices op "Identity" (1.0f) te zetten, wordt het 
-    // perspectief genegeerd en tekenen we direct plat op het 2D-scherm.
-    lightingShader.setMat4("model", glm::mat4(1.0f));
-    lightingShader.setMat4("view", glm::mat4(1.0f));
-    lightingShader.setMat4("projection", glm::mat4(1.0f));
+    lampShader.setMat4("model", glm::mat4(1.0f));
+    lampShader.setMat4("view", glm::mat4(1.0f));
+    lampShader.setMat4("projection", glm::mat4(1.0f));
     
-    // 3. Maak het kruisje mooi spierwit
-    lightingShader.setBool("hasDiffuseTexture", false);
-    lightingShader.setVec3("fallbackColor", glm::vec3(1.0f, 1.0f, 1.0f)); 
+    lampShader.setBool("hasDiffuseTexture", false);
+    lampShader.setVec3("fallbackColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    // tekenen
+    glLineWidth(3.0f); 
+
     glBindVertexArray(crosshairVAO);
     glDrawArrays(GL_LINES, 0, 4);
     glBindVertexArray(0);
+    
+    glLineWidth(1.0f); 
     
     glEnable(GL_DEPTH_TEST);
 }
