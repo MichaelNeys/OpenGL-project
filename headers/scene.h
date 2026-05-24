@@ -38,7 +38,7 @@ private:
     void drawVillage(Shader& lightingShader, Shader& lampShader, glm::mat4& view, glm::mat4& projection);
     void drawBee(Shader& lightingShader);
     void drawPollen(Shader& lightingShader, glm::mat4& view, glm::mat4& projection);
-    void drawCrosshair(Shader& lightingShader);
+    void drawCrosshair(Shader& lampShader);
 
     // scene objecten
     Skybox* skybox  = nullptr;
