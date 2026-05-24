@@ -266,6 +266,9 @@ void Scene::drawBee(Shader &lightingShader)
         currentBeePos = beePos;
         currentBeeDir = dir;
 
+        if (!showBee)
+            return;
+
         float yaw   = atan2(dir.x, dir.z) + glm::radians(180.0f);
         float pitch = atan2(dir.y, sqrt(dir.x*dir.x + dir.z*dir.z));
 

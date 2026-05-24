@@ -24,6 +24,8 @@ public:
     glm::vec3 getBeePosition() const { return currentBeePos; }
     glm::vec3 getBeeDirection() const { return currentBeeDir; }
 
+    bool showBee = true;
+
 private:
     // init helpers
     void initModels();
@@ -52,7 +54,7 @@ private:
     glm::mat4 m_villageMatrix;
     std::vector<glm::mat4> pollenMatrices;
 
-    // bij stuff
+    // bei stuff
     BezierPath beePath;
     float currentDistance = 0.0f;
     glm::vec3 currentBeePos;

@@ -153,10 +153,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     lastX = xpos; lastY = ypos;
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
+
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     if (!isMouseCaptured) return;
     camera.ProcessMouseScroll(yoffset);
 }
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     screenWidth = width;
@@ -184,7 +186,10 @@ void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor
     // Bee camera togglen (C)
     static bool cWasPressed = false;
     bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
-    if (cPressed && !cWasPressed) beeCamera = !beeCamera;
+    if (cPressed && !cWasPressed) {
+        beeCamera = !beeCamera;
+        scene.showBee = !beeCamera;
+    }
     cWasPressed = cPressed;
 
     // Bloom togglen (B)
