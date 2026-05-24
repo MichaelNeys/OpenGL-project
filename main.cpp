@@ -16,8 +16,13 @@ void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor
 
 Camera camera;
 bool firstMouse = true;
+bool isMouseCaptured = false; 
 float lastX = 400.0f, lastY = 300.0f;
 float deltaTime = 0.0f, lastFrame = 0.0f;
+
+int screenWidth = 1920;
+int screenHeight = 1080;
+bool windowResized = false;
 
 int main() {
     glfwInit();
@@ -33,7 +38,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) return -1;
 
@@ -48,8 +53,8 @@ int main() {
     Shader lampShader("shaders/light.vert", "shaders/light.frag");
     Scene scene;
     // inladen postprocessor:
-    PostProcessor postProcessor(1920, 1080);
-    Bloom bloom(1920, 1080);
+    PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
+    Bloom* bloom = new Bloom(screenWidth, screenHeight);
 
     bool beeCamera = false;
 
@@ -59,13 +64,35 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        // updates wanneer resized
+        if (windowResized && screenWidth > 0 && screenHeight > 0) {
+            bloom->Delete();
+            postProcessor->Delete();
+            delete bloom;
+            delete postProcessor;
+
+            bloom = new Bloom(screenWidth, screenHeight);
+            postProcessor = new PostProcessor(screenWidth, screenHeight);
+            
+            windowResized = false;
+        }
+
         // --- 2. Input verwerken ---
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
             
-        camera.ProcessKeyboard(window, deltaTime);
+        // laat muis los        
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            isMouseCaptured = false;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+            
+        // alleen movements wanneer muis gevangen is
+        if (isMouseCaptured) {
+            camera.ProcessKeyboard(window, deltaTime);
+        }
         
-        processInput(window, scene, postProcessor, bloom, beeCamera);
+        processInput(window, scene, *postProcessor, *bloom, beeCamera);
 
         // --- 3. Scherm schoonmaken ---
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -80,25 +107,32 @@ int main() {
         } else {
             view = camera.GetViewMatrix();
         }
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 300.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (float)screenWidth / (float)screenHeight, 0.1f, 300.0f);
 
-        // Muisklik check (heeft de view en projection matrix van hierboven nodig)
+        // Muisklik check
         static bool leftMousePressed = false;
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
             if (!leftMousePressed) {
                 leftMousePressed = true;
-                scene.checkMouseClick(view, projection, camera.Position);
+                
+                if (!isMouseCaptured) {
+                    isMouseCaptured = true;
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    firstMouse = true;
+                } else {
+                    scene.checkMouseClick(view, projection, camera.Position);
+                }
             }
         } else {
             leftMousePressed = false;
         }
 
         // --- 5. Renderen (Tekenen) ---
-        bloom.bindScene();
+        bloom->bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
-        bloom.process();
-        bloom.render();
-        postProcessor.DrawFromTexture(bloom.getResultTexture());
+        bloom->process();
+        bloom->render();
+        postProcessor->DrawFromTexture(bloom->getResultTexture());
 
         // --- 6. Buffers wisselen en events pollen ---
         glfwSwapBuffers(window);
@@ -107,23 +141,32 @@ int main() {
 
     // cleanup en afsluiten van scene
     scene.Delete();
-    postProcessor.Delete();
-    bloom.Delete();
+    postProcessor->Delete();
+    bloom->Delete();
+    delete postProcessor;
+    delete bloom;
+    
     glfwTerminate();
     return 0;
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (!isMouseCaptured) return;
+
     if (firstMouse) { lastX = xpos; lastY = ypos; firstMouse = false; }
     float xoffset = xpos - lastX, yoffset = lastY - ypos;
     lastX = xpos; lastY = ypos;
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    if (!isMouseCaptured) return;
     camera.ProcessMouseScroll(yoffset);
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+    screenWidth = width;
+    screenHeight = height;
+    windowResized = true;
 }
 
 void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera) {
