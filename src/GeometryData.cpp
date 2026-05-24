@@ -60,4 +60,35 @@ namespace Geometry {
          1.0f,-1.0f,-1.0f,  1.0f, 1.0f,-1.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f, 1.0f,  1.0f,-1.0f, 1.0f,  1.0f,-1.0f,-1.0f,
         -1.0f,-1.0f,-1.0f, -1.0f,-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f,-1.0f, -1.0f,-1.0f,-1.0f
     };
+
+    const int numPointLights = 18;
+    const glm::vec3 pointLightPositions[18] = {
+        // straat achter
+        glm::vec3(-11.0f, -0.5f, -19.0f),
+        glm::vec3( -6.0f, -0.5f, -19.0f),
+        glm::vec3( -2.0f, -0.5f, -19.0f),
+        glm::vec3( 2.0f, -0.5f, -19.0f),
+        glm::vec3( 6.0f, -0.5f, -19.0f),
+        glm::vec3( 11.0f, -0.5f, -19.0f),
+
+        // station
+        glm::vec3( 1.0f, 0.5f, -15.0f),
+        glm::vec3( 13.0f, 0.5f, -10.0f),
+        
+        // klokken
+        glm::vec3(-12.0f, 4.5f, -11.0f),
+        glm::vec3( 15.0f, 4.5f, -12.0f),
+
+        // straat voor
+        glm::vec3(-11.0f, -0.5f, -6.0f),
+        glm::vec3( -6.0f, -0.5f, -6.0f),
+        glm::vec3( -2.0f, -0.5f, -6.0f),
+        glm::vec3( 2.0f, -0.5f, -6.0f),
+        glm::vec3( 6.0f, -0.5f, -6.0f),
+        glm::vec3( 11.0f, -0.5f, -6.0f),
+
+        // tussen gebouwen
+        glm::vec3(-14.0f, 0.5f, -10.0f),
+        glm::vec3(-14.0f, 0.5f, -14.0f)
+    };
 }

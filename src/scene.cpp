@@ -112,38 +112,6 @@ void Scene::setLightUniforms(Shader& shader) {
     shader.setVec3("light.specular", glm::vec3(0.1f,  0.1f,  0.1f));
 
     // 2. ALLE LANTAARNS
-    glm::vec3 pointLightPositions[] = {
-        // straat achter (Index 0 t/m 5)
-        glm::vec3(-11.0f, -0.5f, -19.0f),
-        glm::vec3( -6.0f, -0.5f, -19.0f),
-        glm::vec3( -2.0f, -0.5f, -19.0f),
-        glm::vec3( 2.0f, -0.5f, -19.0f),
-        glm::vec3( 6.0f, -0.5f, -19.0f),
-        glm::vec3( 11.0f, -0.5f, -19.0f),
-
-        // station (Index 6 en 7) -> DEZE MOETEN ALTIJD AAN BLIJVEN
-        glm::vec3( 1.0f, 0.5f, -15.0f),
-        glm::vec3( 13.0f, 0.5f, -10.0f),
-        
-        // klokken (Index 8 en 9)
-        glm::vec3(-12.0f, 4.5f, -11.0f),
-        glm::vec3( 15.0f, 4.5f, -12.0f),
-
-        // straat voor (Index 10 t/m 15)
-        glm::vec3(-11.0f, -0.5f, -6.0f),
-        glm::vec3( -6.0f, -0.5f, -6.0f),
-        glm::vec3( -2.0f, -0.5f, -6.0f),
-        glm::vec3( 2.0f, -0.5f, -6.0f),
-        glm::vec3( 6.0f, -0.5f, -6.0f),
-        glm::vec3( 11.0f, -0.5f, -6.0f),
-
-        // tussen gebouwen (Index 16 en 17)
-        glm::vec3(-14.0f, 0.5f, -10.0f),
-        glm::vec3(-14.0f, 0.5f, -14.0f),
-    };
-
-    int lightAmount = sizeof(pointLightPositions) / sizeof(pointLightPositions[0]);
-
     // We definiëren de standaard "AAN" kleuren...
     glm::vec3 ambientON  = glm::vec3(0.05f, 0.02f, 0.0f);
     glm::vec3 diffuseON  = glm::vec3(0.5f,  0.3f,  0.1f);
@@ -152,25 +120,24 @@ void Scene::setLightUniforms(Shader& shader) {
     // ... en de "UIT" kleur (volledig zwart)
     glm::vec3 colorOFF   = glm::vec3(0.0f);
 
-    for (int i = 0; i < lightAmount; i++) {
+    for (int i = 0; i < Geometry::numPointLights; i++) {
         std::string n = std::to_string(i);
-        shader.setVec3 ("pointLights[" + n + "].position",  pointLightPositions[i]);
+        shader.setVec3("pointLights[" + n + "].position", Geometry::pointLightPositions[i]);
         
         glm::vec3 currentAmbient, currentDiffuse, currentSpecular;
 
         // Controleer of dit een stationslamp is (index 6 of 7)
         bool isStationLamp = (i == 6 || i == 7);
 
-        // De lamp is AAN als het een stationslamp is, OF als de redstone schakelaar om is
         if (redstoneLampsOn) {
             currentAmbient  = ambientON;
             currentDiffuse  = diffuseON;
             currentSpecular = specularON;
-        } else if (isStationLamp) {
+        } else if (isStationLamp) { 
             currentAmbient  = ambientON;
             currentDiffuse  = glm::vec3(2.0f,  1.2f,  0.4f);
             currentSpecular = specularON;
-        } else {
+        } else { 
             currentAmbient  = colorOFF;
             currentDiffuse  = colorOFF;
             currentSpecular = colorOFF;
