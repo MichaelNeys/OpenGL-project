@@ -73,6 +73,17 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        // FPS teller
+        static int frameCount = 0;
+        static float fpsTimer = 0.0f;
+        frameCount++;
+        fpsTimer += deltaTime;
+        if (fpsTimer >= 1.0f) {
+            std::cout << "FPS: " << frameCount << std::endl;
+            frameCount = 0;
+            fpsTimer   = 0.0f;
+        }
+
         // updates wanneer resized
         if (windowResized && screenWidth > 0 && screenHeight > 0) {
             bloom->Delete();
