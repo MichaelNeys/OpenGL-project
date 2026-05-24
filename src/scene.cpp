@@ -12,7 +12,7 @@
 Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     unsigned int vertexCount = 216;
     lampMesh = new Mesh(const_cast<float*>(Geometry::cubeVertices), vertexCount, true);
-    terrain = new Terrain();
+    terrain  = new Terrain();
 
     std::vector<std::string> skyFaces = {
         "../models/indigo-re-skybox/indigo_ft.jpg",
@@ -24,32 +24,43 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     };
     skybox = new Skybox(skyFaces, "../shaders/skybox.vert", "../shaders/skybox.frag");
 
-    // vaste matrixen
     m_villageMatrix = glm::mat4(1.0f);
     m_villageMatrix = glm::translate(m_villageMatrix, glm::vec3(0.0f, -3.0f, -10.0f));
     m_villageMatrix = glm::rotate(m_villageMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     m_villageMatrix = glm::scale(m_villageMatrix, glm::vec3(5.0f));
 
-    // helper initialisators
     initModels();
     initPollen();
     initCrosshair();
     initPickingFBO();
+    initUniformNameCache();
+}
+
+void Scene::initUniformNameCache() {
+    // "pointLights[i].xxx" eenmaal opstellen
+    for (int i = 0; i < Geometry::numPointLights; i++) {
+        std::string base = "pointLights[" + std::to_string(i) + "]";
+        u_plPos.push_back(base + ".position");
+        u_plAmb.push_back(base + ".ambient");
+        u_plDif.push_back(base + ".diffuse");
+        u_plSpe.push_back(base + ".specular");
+        u_plConst.push_back(base + ".constant");
+        u_plLin.push_back(base + ".linear");
+        u_plQuad.push_back(base + ".quadratic");
+    }
 }
 
 void Scene::initPollen() {
     srand((unsigned)time(NULL));
 
-    // aantal pollen
-    int amountOfPollen = 6000; 
+    const int amountOfPollen = 6000;
 
     for (int i = 0; i < amountOfPollen; i++) {
-        float targetDist = (beePath.getTotalLength() / amountOfPollen) * i;
-        float t = beePath.getTForDistance(targetDist);
-        glm::vec3 basePos = beePath.getPoint(t);
+        float     targetDist = (beePath.getTotalLength() / amountOfPollen) * i;
+        float     t          = beePath.getTForDistance(targetDist);
+        glm::vec3 basePos    = beePath.getPoint(t);
 
-        // verpreiden in een straal rond de curve
-        float radius = 0.025f;
+        const float radius = 0.025f;
         float randX = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
         float randY = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
         float randZ = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
@@ -58,17 +69,16 @@ void Scene::initPollen() {
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, finalPos);
-        model = glm::rotate(model, finalPos.x * 15.0f, glm::vec3(1.0f, 0.5f, 0.2f)); 
+        model = glm::rotate(model, finalPos.x * 15.0f, glm::vec3(1.0f, 0.5f, 0.2f));
         model = glm::rotate(model, finalPos.z * 10.0f, glm::vec3(0.2f, 1.0f, 0.5f));
-        model = glm::scale(model, glm::vec3(0.005f)); 
+        model = glm::scale(model, glm::vec3(0.005f));
 
         pollenMatrices.push_back(model);
     }
 }
 
 void Scene::initModels() {
-    // Village
-    for (const std::string& base : {"models/Minecraft ville", "../models/Minecraft ville"}) {
+    for (const std::string& base : { "models/Minecraft ville", "../models/Minecraft ville" }) {
         std::string path = base + "/minecraft_ville.glb";
         if (std::filesystem::exists(path)) {
             Village = new Model(path);
@@ -78,8 +88,7 @@ void Scene::initModels() {
     }
     if (!Village) std::cerr << "Village model niet gevonden!" << std::endl;
 
-    // Bee
-    for (const std::string& base : {"models/Bee-1", "../models/Bee-1"}) {
+    for (const std::string& base : { "models/Bee-1", "../models/Bee-1" }) {
         std::string path = base + "/minecraft_bee.glb";
         if (std::filesystem::exists(path)) {
             Bee = new Model(path);
@@ -96,16 +105,13 @@ void Scene::initCrosshair() {
 
     glBindVertexArray(crosshairVAO);
     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Geometry::crosshairVertices), Geometry::crosshairVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Geometry::crosshairVertices),
+                 Geometry::crosshairVertices, GL_STATIC_DRAW);
 
-    // Vertel de GPU hoe de array is opgebouwd (komt exact overeen met je kubus)
-    // 0 = Positie
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // 1 = Normaal
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    // 2 = TexCoords
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
@@ -132,71 +138,52 @@ void Scene::initPickingFBO() {
 }
 
 void Scene::setLightUniforms(Shader& shader) {
-    // 1. GLOBAAL LICHT (Maan)
     shader.setVec3("light.position", lightPos);
     shader.setVec3("light.ambient",  glm::vec3(0.08f, 0.08f, 0.15f));
     shader.setVec3("light.diffuse",  glm::vec3(0.25f, 0.25f, 0.35f));
     shader.setVec3("light.specular", glm::vec3(0.1f,  0.1f,  0.1f));
 
-    // 2. ALLE LANTAARNS
-    // We definiëren de standaard "AAN" kleuren...
-    glm::vec3 ambientON  = glm::vec3(0.05f, 0.02f, 0.0f);
-    glm::vec3 diffuseON  = glm::vec3(0.5f,  0.3f,  0.1f);
-    glm::vec3 specularON = glm::vec3(1.0f,  0.8f,  0.5f);
-    
-    // ... en de "UIT" kleur (volledig zwart)
-    glm::vec3 colorOFF   = glm::vec3(0.0f);
+    const glm::vec3 ambientON  = glm::vec3(0.05f, 0.02f, 0.0f);
+    const glm::vec3 diffuseON  = glm::vec3(0.5f,  0.3f,  0.1f);
+    const glm::vec3 specularON = glm::vec3(1.0f,  0.8f,  0.5f);
+    const glm::vec3 colorOFF   = glm::vec3(0.0f);
 
     for (int i = 0; i < Geometry::numPointLights; i++) {
-        std::string n = std::to_string(i);
-        shader.setVec3("pointLights[" + n + "].position", Geometry::pointLightPositions[i]);
-        
-        glm::vec3 currentAmbient, currentDiffuse, currentSpecular;
+        shader.setVec3(u_plPos[i], Geometry::pointLightPositions[i]);
 
-        // Controleer of dit een stationslamp is (index 6 of 7)
-        bool isStationLamp = (i == 6 || i == 7);
+        bool      isStationLamp = (i == 6 || i == 7);
+        glm::vec3 amb, dif, spe;
 
         if (redstoneLampsOn) {
-            currentAmbient  = ambientON;
-            currentDiffuse  = diffuseON;
-            currentSpecular = specularON;
-        } else if (isStationLamp) { 
-            currentAmbient  = ambientON;
-            currentDiffuse  = glm::vec3(2.0f,  1.2f,  0.4f);
-            currentSpecular = specularON;
-        } else { 
-            currentAmbient  = colorOFF;
-            currentDiffuse  = colorOFF;
-            currentSpecular = colorOFF;
+            amb = ambientON; dif = diffuseON; spe = specularON;
+        } else if (isStationLamp) {
+            amb = ambientON; dif = glm::vec3(2.0f, 1.2f, 0.4f); spe = specularON;
+        } else {
+            amb = dif = spe = colorOFF;
         }
-        
-        // Stuur de berekende kleur van DEZE specifieke lantaarn naar de shader
-        shader.setVec3 ("pointLights[" + n + "].ambient",   currentAmbient);
-        shader.setVec3 ("pointLights[" + n + "].diffuse",   currentDiffuse);
-        shader.setVec3 ("pointLights[" + n + "].specular",  currentSpecular);
-        
-        shader.setFloat("pointLights[" + n + "].constant",  1.0f);
-        shader.setFloat("pointLights[" + n + "].linear",    0.09f);
-        shader.setFloat("pointLights[" + n + "].quadratic", 0.032f);
+
+        shader.setVec3 (u_plAmb[i],   amb);
+        shader.setVec3 (u_plDif[i],   dif);
+        shader.setVec3 (u_plSpe[i],   spe);
+        shader.setFloat(u_plConst[i], 1.0f);
+        shader.setFloat(u_plLin[i],   0.09f);
+        shader.setFloat(u_plQuad[i],  0.032f);
     }
 }
 
 void Scene::Draw(Shader& lightingShader, Shader& lampShader,
                  glm::mat4& view, glm::mat4& projection,
                  glm::vec3& cameraPos) {
-    // Skybox
     skybox->Draw(view, projection);
 
-    // Lighting setup
     lightingShader.use();
     setLightUniforms(lightingShader);
-    lightingShader.setVec3("viewPos", cameraPos);
-    lightingShader.setMat4("view", view);
-    lightingShader.setMat4("projection", projection);
+    lightingShader.setVec3("viewPos",           cameraPos);
+    lightingShader.setMat4("view",              view);
+    lightingShader.setMat4("projection",        projection);
     lightingShader.setBool("hasDiffuseTexture", false);
-    lightingShader.setInt("texture_diffuse1", 0);
+    lightingShader.setInt ("texture_diffuse1",  0);
 
-    // Terrein
     terrain->Draw(lightingShader);
     drawVillage(lightingShader, lampShader, view, projection);
 
@@ -206,123 +193,123 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
     drawCrosshair(lampShader);
 }
 
-void Scene::drawVillage(Shader &lightingShader, Shader &lampShader, glm::mat4 &view, glm::mat4 &projection)
-{
-    glDisable(GL_CULL_FACE);
-    if (Village) {
-        for (unsigned int i = 0; i < Village->meshes.size(); i++) {
-            
-            // Bepaal of we de glow shader moeten gebruiken
-            bool useLampShader = false;
-            if (i == 7 || i == 8) {
-                useLampShader = true; // Gewone lantaarns zijn altijd AAN
-            }
-            if (i == 5 && redstoneLampsOn) {
-                useLampShader = true; // Redstone lampen alleen als de schakelaar AAN is!
-            }
+void Scene::drawVillage(Shader& lightingShader, Shader& lampShader,
+                        glm::mat4& view, glm::mat4& projection) {
+    if (!Village) return;
 
-            if (useLampShader) {
+    glDisable(GL_CULL_FACE);
+
+    // Houd bij welke shader actief is zodat we geen onnodige use()-calls doen
+    bool lampActive  = false;
+    bool lightActive = false;
+
+    for (unsigned int i = 0; i < Village->meshes.size(); i++) {
+        bool useLamp = (i == 7 || i == 8) || (i == 5 && redstoneLampsOn);
+
+        if (useLamp) {
+            if (!lampActive) {
                 lampShader.use();
-                lampShader.setMat4("model", m_villageMatrix);
-                lampShader.setMat4("view", view);
+                lampShader.setMat4("model",      m_villageMatrix);
+                lampShader.setMat4("view",       view);
                 lampShader.setMat4("projection", projection);
-                Village->meshes[i].Draw(lampShader);
-            } else {
-                lightingShader.use();
-                lightingShader.setMat4("model", m_villageMatrix);
-                
-                // Als de redstone lamp UIT is, wordt hij net als de muren getekend (donker)
-                lightingShader.setVec3("material.ambient",  glm::vec3(0.15f, 0.15f, 0.15f));
-                lightingShader.setVec3("material.diffuse",  glm::vec3(0.8f, 0.8f, 0.8f));
-                lightingShader.setVec3("material.specular", glm::vec3(0.2f, 0.2f, 0.2f));
-                lightingShader.setFloat("material.shininess", 10.0f);
-                Village->meshes[i].Draw(lightingShader);
+                lampActive  = true;
+                lightActive = false;
             }
+            Village->meshes[i].Draw(lampShader);
+        } else {
+            if (!lightActive) {
+                lightingShader.use();
+                lightingShader.setMat4 ("model",              m_villageMatrix);
+                lightingShader.setVec3 ("material.ambient",   glm::vec3(0.15f));
+                lightingShader.setVec3 ("material.diffuse",   glm::vec3(0.8f));
+                lightingShader.setVec3 ("material.specular",  glm::vec3(0.2f));
+                lightingShader.setFloat("material.shininess", 10.0f);
+                lightActive = true;
+                lampActive  = false;
+            }
+            Village->meshes[i].Draw(lightingShader);
         }
     }
+
+    glEnable(GL_CULL_FACE);
 }
 
-void Scene::drawBee(Shader &lightingShader)
-{
-    if (Bee) {
-        static float lastTime = glfwGetTime();
-        float currentTime = glfwGetTime();
-        float deltaTime   = currentTime - lastTime;
-        lastTime = currentTime;
+void Scene::drawBee(Shader& lightingShader) {
+    if (!Bee) return;
 
-        currentDistance += 0.8f * deltaTime;
-        
-        if (currentDistance > beePath.getTotalLength())
-            currentDistance = fmod(currentDistance, beePath.getTotalLength());
+    static float lastTime = (float)glfwGetTime();
+    float currentTime = (float)glfwGetTime();
+    float deltaTime   = currentTime - lastTime;
+    lastTime = currentTime;
 
-        float t           = beePath.getTForDistance(currentDistance);
-        glm::vec3 beePos  = beePath.getPoint(t);
-        
-        float tNext       = beePath.getTForDistance(currentDistance + 0.1f);
-        if (tNext < t) tNext = 1.0f;
-        glm::vec3 nextPos = beePath.getPoint(tNext);
-        
-        glm::vec3 dir     = glm::normalize(nextPos - beePos);
-        currentBeePos = beePos;
-        currentBeeDir = dir;
+    currentDistance += 0.8f * deltaTime;
+    if (currentDistance > beePath.getTotalLength())
+        currentDistance = fmod(currentDistance, beePath.getTotalLength());
 
-        if (!showBee)
-            return;
+    float     t      = beePath.getTForDistance(currentDistance);
+    glm::vec3 beePos = beePath.getPoint(t);
 
-        float yaw   = atan2(dir.x, dir.z) + glm::radians(180.0f);
-        float pitch = atan2(dir.y, sqrt(dir.x*dir.x + dir.z*dir.z));
+    float     tNext   = beePath.getTForDistance(currentDistance + 0.1f);
+    if (tNext < t) tNext = 1.0f;
+    glm::vec3 nextPos = beePath.getPoint(tNext);
+    glm::vec3 dir     = glm::normalize(nextPos - beePos);
 
-        glm::mat4 BeeModel = glm::mat4(1.0f);
-        BeeModel = glm::translate(BeeModel, beePos);
-        BeeModel = glm::rotate(BeeModel, yaw,   glm::vec3(0.0f, 1.0f, 0.0f));
-        BeeModel = glm::rotate(BeeModel, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-        BeeModel = glm::scale(BeeModel, glm::vec3(0.01f));
+    currentBeePos = beePos;
+    currentBeeDir = dir;
 
-        lightingShader.use();
-        lightingShader.setMat4("model", BeeModel);
-        lightingShader.setVec3("material.ambient",  glm::vec3(0.10f, 0.10f, 0.10f));
-        lightingShader.setVec3("material.diffuse",  glm::vec3(0.35f, 0.35f, 0.38f));
-        lightingShader.setVec3("material.specular", glm::vec3(0.45f, 0.45f, 0.48f));
-        lightingShader.setFloat("material.shininess", 40.0f);
-        Bee->Draw(lightingShader);
-    }
+    if (!showBee) return;
+
+    float yaw   = atan2(dir.x, dir.z) + glm::radians(180.0f);
+    float pitch = atan2(dir.y, sqrt(dir.x * dir.x + dir.z * dir.z));
+
+    glm::mat4 beeModel = glm::mat4(1.0f);
+    beeModel = glm::translate(beeModel, beePos);
+    beeModel = glm::rotate(beeModel, yaw,   glm::vec3(0.0f, 1.0f, 0.0f));
+    beeModel = glm::rotate(beeModel, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+    beeModel = glm::scale(beeModel, glm::vec3(0.01f));
+
+    lightingShader.use();
+    lightingShader.setMat4 ("model",              beeModel);
+    lightingShader.setVec3 ("material.ambient",   glm::vec3(0.10f, 0.10f, 0.10f));
+    lightingShader.setVec3 ("material.diffuse",   glm::vec3(0.35f, 0.35f, 0.38f));
+    lightingShader.setVec3 ("material.specular",  glm::vec3(0.45f, 0.45f, 0.48f));
+    lightingShader.setFloat("material.shininess", 40.0f);
+    Bee->Draw(lightingShader);
 }
 
 void Scene::drawPollen(Shader& lightingShader, glm::mat4& view, glm::mat4& projection) {
-    lightingShader.use(); 
-    lightingShader.setMat4("view", view);
-    lightingShader.setMat4("projection", projection);
+    lightingShader.use();
+    lightingShader.setMat4("view",              view);
+    lightingShader.setMat4("projection",        projection);
     lightingShader.setBool("hasDiffuseTexture", false);
-    lightingShader.setVec3("fallbackColor", glm::vec3(1.0f, 0.8f, 0.2f)); 
+    lightingShader.setVec3("fallbackColor",     glm::vec3(1.0f, 0.8f, 0.2f));
+
     glDisable(GL_CULL_FACE);
 
     for (const glm::mat4& modelMatrix : pollenMatrices) {
         lightingShader.setMat4("model", modelMatrix);
-        lampMesh->Draw(); 
+        lampMesh->Draw();
     }
+
     glEnable(GL_CULL_FACE);
 }
 
-void Scene::drawCrosshair(Shader &lampShader) {
+void Scene::drawCrosshair(Shader& lampShader) {
     glDisable(GL_DEPTH_TEST);
-    
-    lampShader.use(); 
-    
-    lampShader.setMat4("model", glm::mat4(1.0f));
-    lampShader.setMat4("view", glm::mat4(1.0f));
-    lampShader.setMat4("projection", glm::mat4(1.0f));
-    
+
+    lampShader.use();
+    lampShader.setMat4("model",             glm::mat4(1.0f));
+    lampShader.setMat4("view",              glm::mat4(1.0f));
+    lampShader.setMat4("projection",        glm::mat4(1.0f));
     lampShader.setBool("hasDiffuseTexture", false);
-    lampShader.setVec3("fallbackColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    lampShader.setVec3("fallbackColor",     glm::vec3(1.0f, 1.0f, 1.0f));
 
-    glLineWidth(3.0f); 
-
+    glLineWidth(3.0f);
     glBindVertexArray(crosshairVAO);
     glDrawArrays(GL_LINES, 0, 4);
     glBindVertexArray(0);
-    
-    glLineWidth(1.0f); 
-    
+    glLineWidth(1.0f);
+
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -333,7 +320,6 @@ void Scene::Delete() {
     terrain->Delete();
     delete terrain;
 
-    // Verwijder de crosshair VAO en VBO
     glDeleteVertexArrays(1, &crosshairVAO);
     glDeleteBuffers(1, &crosshairVBO);
 
@@ -344,39 +330,31 @@ void Scene::Delete() {
     if (Bee)     { Bee->Delete();     delete Bee;     }
 }
 
-void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, int screenWidth, int screenHeight) {
+void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection,
+                            int screenWidth, int screenHeight) {
     if (!Village) return;
+
     glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
-    
-    // Maak het "scherm" helemaal zwart (ID = 0)
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Teken ALLEEN de objecten waar we op kunnen klikken
     pickingShader->use();
-    pickingShader->setMat4("view", view);
-    pickingShader->setMat4("projection", projection);
-    pickingShader->setMat4("model", m_villageMatrix);
-    
-    // redstone lamp de kleur rood geven
+    pickingShader->setMat4("view",         view);
+    pickingShader->setMat4("projection",   projection);
+    pickingShader->setMat4("model",        m_villageMatrix);
     pickingShader->setVec3("pickingColor", glm::vec3(1.0f, 0.0f, 0.0f));
-    
-    // mesh 5 = redstone lampen
     Village->meshes[5].Draw(*pickingShader);
 
     glReadBuffer(GL_COLOR_ATTACHMENT0);
     unsigned char pixel[3];
     glReadPixels(screenWidth / 2, screenHeight / 2, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // 5. Kijk wat we hebben geraakt!
-    // pixel[0] is Rood, pixel[1] is Groen, pixel[2] is Blauw
     if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0) {
-        // We hebben ROOD geraakt!
         redstoneLampsOn = !redstoneLampsOn;
-        std::cout << "Redstone Lamp picked! Status: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
+        std::cout << "Redstone lamp: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
     } else {
-        std::cout << "Not picked: " << (int)pixel[0] << "," << (int)pixel[1] << "," << (int)pixel[2] << std::endl;
+        std::cout << "Niet gepickt: "
+                  << (int)pixel[0] << ", " << (int)pixel[1] << ", " << (int)pixel[2] << std::endl;
     }
 }
