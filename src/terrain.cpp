@@ -1,69 +1,24 @@
 #include "terrain.h"
+#include "GeometryData.h"
 #include "shader.h"
 #include <glm/glm.hpp>
 #include <cmath>
 #include <algorithm>
 #include <iostream>
 
-// Gedeelde cube vertex data (positie + normaal)
-static float cubeVertices[] = {
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-};
-
 static void appendCubeAt(std::vector<float>& out, float cx, float cy, float cz) {
-    const size_t n = sizeof(cubeVertices) / sizeof(float);
+    const size_t n = 216;
     for (size_t i = 0; i < n; i += 6) {
-        out.push_back(cubeVertices[i + 0] + cx);
-        out.push_back(cubeVertices[i + 1] + cy);
-        out.push_back(cubeVertices[i + 2] + cz);
-        out.push_back(cubeVertices[i + 3]);
-        out.push_back(cubeVertices[i + 4]);
-        out.push_back(cubeVertices[i + 5]);
-        out.push_back(0.0f); // texcoord u
-        out.push_back(0.0f); // texcoord v
+        out.push_back(Geometry::cubeVertices[i + 0] + cx);
+        out.push_back(Geometry::cubeVertices[i + 1] + cy);
+        out.push_back(Geometry::cubeVertices[i + 2] + cz);
+        out.push_back(Geometry::cubeVertices[i + 3]);
+        out.push_back(Geometry::cubeVertices[i + 4]);
+        out.push_back(Geometry::cubeVertices[i + 5]);
+        out.push_back(0.0f); 
+        out.push_back(0.0f); 
     }
 }
-
 Terrain::Terrain() {
     generate();
 }

@@ -74,6 +74,8 @@ add_executable(opengl_project
     src/skybox.cpp
     src/postprocess.cpp
     src/bloom.cpp
+    src/GeometryData.cpp
+    src/BezierPath.cpp
 )
 
 # --- 7. Link Libraries ---

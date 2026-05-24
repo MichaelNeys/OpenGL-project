@@ -7,6 +7,7 @@
 #include "model.h"
 #include "skybox.h"
 #include "terrain.h"
+#include "BezierPath.h"
 
 class Scene {
 public:
@@ -14,38 +15,43 @@ public:
     void Draw(Shader& lightingShader, Shader& lampShader,
               glm::mat4& view, glm::mat4& projection, glm::vec3& cameraPos);
     void Delete();
+    
+    // interactie
     bool redstoneLampsOn = true;
     void checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 cameraPos);
+    
+    // camera getters
     glm::vec3 getBeePosition() const { return currentBeePos; }
     glm::vec3 getBeeDirection() const { return currentBeeDir; }
 
 private:
+    // hulp functies
     void setLightUniforms(Shader& shader);
+    void drawVillage(Shader& lightingShader, Shader& lampShader, glm::mat4& view, glm::mat4& projection);
+    void drawBee(Shader& lightingShader);
+    void drawPollen(Shader& lightingShader, glm::mat4& view, glm::mat4& projection);
+    void drawCrosshair(Shader& lightingShader);
 
-    glm::vec3 lightPos;
-
-    Skybox*  skybox  = nullptr;
+    // scene objecten
+    Skybox* skybox  = nullptr;
     Terrain* terrain = nullptr;
-
     Model* Village = nullptr;
     Model* Bee     = nullptr;
-    Mesh*  lampMesh = nullptr;
+    Mesh* lampMesh = nullptr;
 
-    unsigned int bezierVAO, bezierVBO;
-    int bezierPointCount;
+    // globale lichtposities
+    glm::vec3 lightPos;
 
-    std::vector<glm::vec3> m_controlPoints;
-    std::vector<float>     arcLengthLUT;
-    float totalCurveLength = 0.0f;
-    float currentDistance  = 0.0f;
+    // matrices
+    glm::mat4 m_villageMatrix;
+    std::vector<glm::mat4> pollenMatrices;
 
-    float getTForDistance(float targetDistance);
-    void  buildLUT(int lutResolution);
-    std::vector<glm::vec3> pollenPositions;
-    unsigned int crosshairVAO, crosshairVBO;
-
-    std::vector<glm::vec3> redstoneLightPositions;
-
+    // bij stuff
+    BezierPath beePath;
+    float currentDistance = 0.0f;
     glm::vec3 currentBeePos;
     glm::vec3 currentBeeDir;
+
+    // UI elementen
+    unsigned int crosshairVAO, crosshairVBO;
 };

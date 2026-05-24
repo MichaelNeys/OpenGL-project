@@ -12,6 +12,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera);
 
 Camera camera;
 bool firstMouse = true;
@@ -50,39 +51,38 @@ int main() {
     PostProcessor postProcessor(1920, 1080);
     Bloom bloom(1920, 1080);
 
+    bool beeCamera = false;
+
     while (!glfwWindowShouldClose(window)) {
+        // --- 1. Tijd en Frame updates ---
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // sluiten van window door escape key
+        // --- 2. Input verwerken ---
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
+            
         camera.ProcessKeyboard(window, deltaTime);
+        
+        processInput(window, scene, postProcessor, bloom, beeCamera);
 
-        static bool rKeyPressed = false;
-
-        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-            // Als hij is ingedrukt, en hij was de vorige frame nog NIET ingedrukt
-            if (!rKeyPressed) {
-                // Draai de schakelaar om (van true naar false of andersom)
-                scene.redstoneLampsOn = !scene.redstoneLampsOn;
-                rKeyPressed = true; // Zet op true zodat hij niet blijft flipperen
-            }
-        } else {
-            // Zodra je de knop loslaat, resetten we de beveiliging
-            rKeyPressed = false;
-        }
-
+        // --- 3. Scherm schoonmaken ---
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        // depth buffer instellen en aanzetten
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // matrixen verkrijgen
-        glm::mat4 view = camera.GetViewMatrix();
+        // --- 4. Matrixen berekenen ---
+        glm::mat4 view;
+        if (beeCamera) {
+            glm::vec3 beePos = scene.getBeePosition();
+            glm::vec3 beeDir = scene.getBeeDirection();
+            view = glm::lookAt(beePos, beePos + beeDir, glm::vec3(0.0f, 1.0f, 0.0f));
+        } else {
+            view = camera.GetViewMatrix();
+        }
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), 1920.0f / 1080.0f, 0.1f, 300.0f);
 
-        // tekenen van objecten en postprocesser en bloom renderen
+        // Muisklik check (heeft de view en projection matrix van hierboven nodig)
         static bool leftMousePressed = false;
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
             if (!leftMousePressed) {
@@ -93,42 +93,14 @@ int main() {
             leftMousePressed = false;
         }
 
-        // Bee first person camera
-        static bool beeCamera = false;
-        static bool cWasPressed = false;
-        bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
-        if (cPressed && !cWasPressed) beeCamera = !beeCamera;
-        cWasPressed = cPressed;
-
-        if (beeCamera) {
-            glm::vec3 beePos = scene.getBeePosition();
-            glm::vec3 beeDir = scene.getBeeDirection();
-            view = glm::lookAt(beePos, beePos + beeDir, glm::vec3(0.0f, 1.0f, 0.0f));
-        } else {
-            view = camera.GetViewMatrix();
-        }
-
+        // --- 5. Renderen (Tekenen) ---
         bloom.bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
         bloom.process();
         bloom.render();
         postProcessor.DrawFromTexture(bloom.getResultTexture());
 
-
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
-            postProcessor.setEffect(PostEffect::NONE);
-        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-            postProcessor.setEffect(PostEffect::GAUSSIAN_BLUR);
-        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
-            postProcessor.setEffect(PostEffect::EDGE_DETECT);
-        static bool bWasPressed = false;
-        bool bPressed = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
-        if (bPressed && !bWasPressed) {
-            bloom.enabled = !bloom.enabled;
-            std::cout << "Bloom: " << (bloom.enabled ? "AAN" : "UIT") << std::endl;
-        }
-        bWasPressed = bPressed;
-
+        // --- 6. Buffers wisselen en events pollen ---
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -152,4 +124,29 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera) {
+    // Redstone togglen (R)
+    static bool rWasPressed = false;
+    bool rPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
+    if (rPressed && !rWasPressed) scene.redstoneLampsOn = !scene.redstoneLampsOn;
+    rWasPressed = rPressed;
+
+    // Bee camera togglen (C)
+    static bool cWasPressed = false;
+    bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
+    if (cPressed && !cWasPressed) beeCamera = !beeCamera;
+    cWasPressed = cPressed;
+
+    // Bloom togglen (B)
+    static bool bWasPressed = false;
+    bool bPressed = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
+    if (bPressed && !bWasPressed) bloom.enabled = !bloom.enabled;
+    bWasPressed = bPressed;
+
+    // Post-processing effecten
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) postProcessor.setEffect(PostEffect::NONE);
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) postProcessor.setEffect(PostEffect::GAUSSIAN_BLUR);
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) postProcessor.setEffect(PostEffect::EDGE_DETECT);
 }
