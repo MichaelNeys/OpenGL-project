@@ -26,7 +26,7 @@ struct PointLight {
 };
 
 // Bepaal hoeveel lantaarns je maximaal wilt ondersteunen (bijv. 4)
-#define NR_POINT_LIGHTS 4
+#define NR_POINT_LIGHTS 18
 
 uniform Light light;
 uniform PointLight pointLights[NR_POINT_LIGHTS];

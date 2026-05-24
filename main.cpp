@@ -60,7 +60,7 @@ int main() {
         lastFrame = currentFrame;
 
         // --- 2. Input verwerken ---
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
             
         camera.ProcessKeyboard(window, deltaTime);

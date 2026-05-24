@@ -27,20 +27,19 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     };
     skybox = new Skybox(skyFaces, "../shaders/skybox.vert", "../shaders/skybox.frag");
 
-    // Zorg dat de willekeurige getallen elke keer anders zijn
+    // willekeurige posities
     srand((unsigned)time(NULL));
 
-    // Hoeveel stuifmeel blokjes wil je in totaal over de hele route?
+    // aantal pollen
     int amountOfPollen = 6000; 
 
     for (int i = 0; i < amountOfPollen; i++) {
-        // Verdeel ze netjes over de lengte van de route met de LUT
         float targetDist = (beePath.getTotalLength() / amountOfPollen) * i;
         float t = beePath.getTForDistance(targetDist);
         glm::vec3 basePos = beePath.getPoint(t);
 
-        // Voeg een beetje "ruis" / willekeurige spreiding toe
-        float radius = 0.025f; // Hoe ver mogen ze afwijken van de middellijn?
+        // verpreiden in een straal rond de curve
+        float radius = 0.025f;
         float randX = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
         float randY = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
         float randZ = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
@@ -112,19 +111,76 @@ void Scene::setLightUniforms(Shader& shader) {
     shader.setVec3("light.diffuse",  glm::vec3(0.25f, 0.25f, 0.35f));
     shader.setVec3("light.specular", glm::vec3(0.1f,  0.1f,  0.1f));
 
-    // 2. JE VASTE LANTAARNS (Altijd aan)
+    // 2. ALLE LANTAARNS
     glm::vec3 pointLightPositions[] = {
-        glm::vec3( 2.0f, 0.5f, -15.0f),
-        glm::vec3(-11.0f, 0.5f, -15.0f),
-        glm::vec3( 11.0f, 0.5f, -15.0f),
-        glm::vec3( -2.0f, 0.5f, -15.0f),
+        // straat achter (Index 0 t/m 5)
+        glm::vec3(-11.0f, -0.5f, -19.0f),
+        glm::vec3( -6.0f, -0.5f, -19.0f),
+        glm::vec3( -2.0f, -0.5f, -19.0f),
+        glm::vec3( 2.0f, -0.5f, -19.0f),
+        glm::vec3( 6.0f, -0.5f, -19.0f),
+        glm::vec3( 11.0f, -0.5f, -19.0f),
+
+        // station (Index 6 en 7) -> DEZE MOETEN ALTIJD AAN BLIJVEN
+        glm::vec3( 1.0f, 0.5f, -15.0f),
+        glm::vec3( 13.0f, 0.5f, -10.0f),
+        
+        // klokken (Index 8 en 9)
+        glm::vec3(-12.0f, 4.5f, -11.0f),
+        glm::vec3( 15.0f, 4.5f, -12.0f),
+
+        // straat voor (Index 10 t/m 15)
+        glm::vec3(-11.0f, -0.5f, -6.0f),
+        glm::vec3( -6.0f, -0.5f, -6.0f),
+        glm::vec3( -2.0f, -0.5f, -6.0f),
+        glm::vec3( 2.0f, -0.5f, -6.0f),
+        glm::vec3( 6.0f, -0.5f, -6.0f),
+        glm::vec3( 11.0f, -0.5f, -6.0f),
+
+        // tussen gebouwen (Index 16 en 17)
+        glm::vec3(-14.0f, 0.5f, -10.0f),
+        glm::vec3(-14.0f, 0.5f, -14.0f),
     };
-    for (int i = 0; i < 4; i++) {
+
+    int lightAmount = sizeof(pointLightPositions) / sizeof(pointLightPositions[0]);
+
+    // We definiëren de standaard "AAN" kleuren...
+    glm::vec3 ambientON  = glm::vec3(0.05f, 0.02f, 0.0f);
+    glm::vec3 diffuseON  = glm::vec3(0.5f,  0.3f,  0.1f);
+    glm::vec3 specularON = glm::vec3(1.0f,  0.8f,  0.5f);
+    
+    // ... en de "UIT" kleur (volledig zwart)
+    glm::vec3 colorOFF   = glm::vec3(0.0f);
+
+    for (int i = 0; i < lightAmount; i++) {
         std::string n = std::to_string(i);
         shader.setVec3 ("pointLights[" + n + "].position",  pointLightPositions[i]);
-        shader.setVec3 ("pointLights[" + n + "].ambient",   glm::vec3(0.05f, 0.02f, 0.0f));
-        shader.setVec3 ("pointLights[" + n + "].diffuse",   glm::vec3(1.0f,  0.6f,  0.2f));
-        shader.setVec3 ("pointLights[" + n + "].specular",  glm::vec3(1.0f,  0.8f,  0.5f));
+        
+        glm::vec3 currentAmbient, currentDiffuse, currentSpecular;
+
+        // Controleer of dit een stationslamp is (index 6 of 7)
+        bool isStationLamp = (i == 6 || i == 7);
+
+        // De lamp is AAN als het een stationslamp is, OF als de redstone schakelaar om is
+        if (redstoneLampsOn) {
+            currentAmbient  = ambientON;
+            currentDiffuse  = diffuseON;
+            currentSpecular = specularON;
+        } else if (isStationLamp) {
+            currentAmbient  = ambientON;
+            currentDiffuse  = glm::vec3(2.0f,  1.2f,  0.4f);
+            currentSpecular = specularON;
+        } else {
+            currentAmbient  = colorOFF;
+            currentDiffuse  = colorOFF;
+            currentSpecular = colorOFF;
+        }
+        
+        // Stuur de berekende kleur van DEZE specifieke lantaarn naar de shader
+        shader.setVec3 ("pointLights[" + n + "].ambient",   currentAmbient);
+        shader.setVec3 ("pointLights[" + n + "].diffuse",   currentDiffuse);
+        shader.setVec3 ("pointLights[" + n + "].specular",  currentSpecular);
+        
         shader.setFloat("pointLights[" + n + "].constant",  1.0f);
         shader.setFloat("pointLights[" + n + "].linear",    0.09f);
         shader.setFloat("pointLights[" + n + "].quadratic", 0.032f);
@@ -177,11 +233,9 @@ void Scene::drawBee(Shader &lightingShader)
 
         currentDistance += 0.8f * deltaTime;
         
-        // UPDATE: Gebruik beePath voor de lengte
         if (currentDistance > beePath.getTotalLength())
             currentDistance = fmod(currentDistance, beePath.getTotalLength());
 
-        // UPDATE: Gebruik beePath.getTForDistance en beePath.getPoint
         float t           = beePath.getTForDistance(currentDistance);
         glm::vec3 beePos  = beePath.getPoint(t);
         
@@ -243,7 +297,7 @@ void Scene::drawCrosshair(Shader &lightingShader)
     lightingShader.setBool("hasDiffuseTexture", false);
     lightingShader.setVec3("fallbackColor", glm::vec3(1.0f, 1.0f, 1.0f)); 
 
-    // 4. Teken de 2 lijnen (4 punten)
+    // tekenen
     glBindVertexArray(crosshairVAO);
     glDrawArrays(GL_LINES, 0, 4);
     glBindVertexArray(0);
@@ -332,7 +386,7 @@ void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 came
     const std::vector<Mesh::Vertex>& verts = Village->meshes[5].getVertices();
     const std::vector<unsigned int>& indices = Village->meshes[5].getIndices();
 
-    // 4. Test onze laserstraal tegen ELKE driehoek van de lampen
+    // check of we raak schieten
     for (size_t i = 0; i < indices.size(); i += 3) {
         glm::vec3 v0 = verts[indices[i]].Position;
         glm::vec3 v1 = verts[indices[i+1]].Position;
@@ -343,7 +397,6 @@ void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, glm::vec3 came
         v2 = glm::vec3(m_villageMatrix * glm::vec4(v2, 1.0f));
 
         if (rayIntersectsTriangle(cameraPos, ray_wor, v0, v1, v2)) {
-            // RAAK!
             redstoneLampsOn = !redstoneLampsOn;
             std::cout << "Redstone Lamp geraakt met kruisje! Status: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
             break; 
