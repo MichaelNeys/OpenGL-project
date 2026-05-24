@@ -12,7 +12,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera);
+void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured);
 
 Camera camera;
 bool firstMouse = true;
@@ -24,14 +24,14 @@ int screenWidth = 1920;
 int screenHeight = 1080;
 bool windowResized = false;
 
-int main() {
+GLFWwindow* initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
-    if (!window) { glfwTerminate(); return -1; }
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", NULL, NULL);
+    if (!window) { glfwTerminate(); return nullptr; }
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -40,13 +40,19 @@ int main() {
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) return -1;
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) return nullptr;
+    
+    return window;
+}
 
-    // aanzetten van depth buffer
+int main() {
+    GLFWwindow* window = initWindow();
+    if (!window) return -1;
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glViewport(0, 0, 1920, 1080);
+    glViewport(0, 0, screenWidth, screenHeight);
 
     // inladen van shaders
     Shader lightingShader("shaders/lighting.vert", "shaders/lighting.frag");
@@ -78,21 +84,10 @@ int main() {
         }
 
         // --- 2. Input verwerken ---
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-            glfwSetWindowShouldClose(window, true);
-            
-        // laat muis los        
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            isMouseCaptured = false;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-            
-        // alleen movements wanneer muis gevangen is
         if (isMouseCaptured) {
             camera.ProcessKeyboard(window, deltaTime);
-        }
-        
-        processInput(window, scene, *postProcessor, *bloom, beeCamera);
+        }        
+        processInput(window, scene, *postProcessor, *bloom, beeCamera, isMouseCaptured);
 
         // --- 3. Scherm schoonmaken ---
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -169,8 +164,18 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     windowResized = true;
 }
 
-void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera) {
-    // Redstone togglen (R)
+void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured) {
+    // afsluiten (Q)
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+        
+    // muis loslaten (ESC)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        isMouseCaptured = false;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    // lampen toggelen (R)
     static bool rWasPressed = false;
     bool rPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
     if (rPressed && !rWasPressed) scene.redstoneLampsOn = !scene.redstoneLampsOn;
