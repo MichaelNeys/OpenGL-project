@@ -76,6 +76,7 @@ add_executable(opengl_project
     src/bloom.cpp
     src/GeometryData.cpp
     src/BezierPath.cpp
+    src/bluePlane.cpp
 )
 
 # --- 7. Link Libraries ---

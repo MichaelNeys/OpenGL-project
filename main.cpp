@@ -8,6 +8,7 @@
 #include <scene.h>
 #include <postprocess.h>
 #include <bloom.h>
+#include <bluePlane.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -61,6 +62,8 @@ int main() {
     // inladen postprocessor:
     PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
     Bloom* bloom = new Bloom(screenWidth, screenHeight);
+    // inladen chroma key
+    BluePlane BluePlane("models/Overlay/test1.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
 
     bool beeCamera = false;
 
@@ -125,6 +128,13 @@ int main() {
         // --- 5. Renderen (Tekenen) ---
         bloom->bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
+        BluePlane.DrawPlane(view, projection);
+        // Overlay togglen (V)
+        static bool vWasPressed = false;
+        bool vPressed = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
+        if (vPressed && !vWasPressed) BluePlane.showOverlay = !BluePlane.showOverlay;
+        vWasPressed = vPressed;
+
         bloom->process();
         bloom->render();
         postProcessor->DrawFromTexture(bloom->getResultTexture());
@@ -138,6 +148,7 @@ int main() {
     scene.Delete();
     postProcessor->Delete();
     bloom->Delete();
+    BluePlane.Delete();
     delete postProcessor;
     delete bloom;
     
