@@ -353,7 +353,7 @@ void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, int screenWidt
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // 2. Teken ALLEEN de objecten waar we op kunnen klikken
+    // Teken ALLEEN de objecten waar we op kunnen klikken
     pickingShader->use();
     pickingShader->setMat4("view", view);
     pickingShader->setMat4("projection", projection);
@@ -376,8 +376,8 @@ void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection, int screenWidt
     if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0) {
         // We hebben ROOD geraakt!
         redstoneLampsOn = !redstoneLampsOn;
-        std::cout << "Redstone Lamp ge-PICKED! Status: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
+        std::cout << "Redstone Lamp picked! Status: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
     } else {
-        std::cout << "Mis! We raakten kleur: " << (int)pixel[0] << "," << (int)pixel[1] << "," << (int)pixel[2] << std::endl;
+        std::cout << "Not picked: " << (int)pixel[0] << "," << (int)pixel[1] << "," << (int)pixel[2] << std::endl;
     }
 }
