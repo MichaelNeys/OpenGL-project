@@ -58,6 +58,7 @@ find_package(OpenGL REQUIRED)
 
 # --- 5. GLAD Library ---
 add_library(GLAD STATIC glad.c)
+target_include_directories(GLAD PUBLIC ${CMAKE_SOURCE_DIR}/includes)
 target_link_libraries(GLAD PRIVATE OpenGL::GL)
 
 # --- 6. Main Executable ---
