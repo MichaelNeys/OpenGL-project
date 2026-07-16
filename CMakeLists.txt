@@ -55,11 +55,10 @@ endif()
 
 # --- 4. Find System Packages ---
 find_package(OpenGL REQUIRED)
-# Note: find_package(glm) and find_package(glfw3) are REMOVED because we fetched them above
 
 # --- 5. GLAD Library ---
 add_library(GLAD STATIC glad.c)
-target_include_directories(GLAD PUBLIC ${CMAKE_SOURCE_DIR}/includes ${CMAKE_SOURCE_DIR}/headers)
+target_link_libraries(GLAD PRIVATE OpenGL::GL)
 
 # --- 6. Main Executable ---
 add_executable(opengl_project
@@ -96,7 +95,6 @@ endif()
 
 # 8. Include headers for the main project
 target_include_directories(opengl_project PRIVATE 
-    ${CMAKE_SOURCE_DIR}/includes 
     ${CMAKE_SOURCE_DIR}/headers
 )
 
