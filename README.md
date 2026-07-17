@@ -1,4 +1,4 @@
-# cg-vc-project
+# OpenGL Project
 
 to build the project when you are **inside the build** folder
 
