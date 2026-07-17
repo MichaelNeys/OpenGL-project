@@ -75,10 +75,11 @@ add_executable(opengl_project
     src/postprocess.cpp
     src/bloom.cpp
     src/GeometryData.cpp
-    
     src/bluePlane.cpp
     src/Track/BezierCurve.cpp
     src/Track/BezierPath.cpp
+    src/Track/TrackRenderer.cpp
+    src/Lighting/LightManager.cpp
 )
 
 # --- 7. Link Libraries ---

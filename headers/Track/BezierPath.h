@@ -1,4 +1,3 @@
-// BezierPath.h
 #pragma once
 #include "BezierCurve.h"
 #include <vector>
