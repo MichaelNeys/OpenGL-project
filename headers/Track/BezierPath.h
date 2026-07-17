@@ -11,6 +11,7 @@ public:
     glm::vec3 getPoint(float t) const;
     float getTForDistance(float targetDistance) const;
     float getTotalLength() const { return totalCurveLength; }
+    std::vector<glm::vec3> generateVisualPath(int stepsPerSegment) const;
 
 private:
     void buildLUT(int resolution);

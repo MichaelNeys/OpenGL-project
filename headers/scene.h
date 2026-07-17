@@ -35,6 +35,7 @@ private:
     // Init helpers
     void initModels();
     void initPollen();
+    void initTrackLine();
     void initCrosshair();
     void initPickingFBO();
     void initUniformNameCache();
@@ -46,6 +47,11 @@ private:
     void drawPollen(Shader& lightingShader, glm::mat4& view, glm::mat4& projection);
     void drawCrosshair(Shader& lampShader);
 
+    // trackline
+    unsigned int trackLineVAO = 0;
+    unsigned int trackLineVBO = 0;
+    unsigned int trackLineVertexCount = 0;
+    
     // Scene objecten
     Skybox* skybox = nullptr;
     Terrain* terrain = nullptr;

@@ -38,13 +38,13 @@ Scene::Scene()
 
     initModels();
     initPollen();
+    initTrackLine();
     initCrosshair();
     initPickingFBO();
     initUniformNameCache();
 }
 
 void Scene::initUniformNameCache() {
-    // "pointLights[i].xxx" eenmaal opstellen
     for (int i = 0; i < Geometry::numPointLights; i++) {
         std::string base = "pointLights[" + std::to_string(i) + "]";
         u_plPos.push_back(base + ".position");
@@ -59,13 +59,12 @@ void Scene::initUniformNameCache() {
 
 void Scene::initPollen() {
     srand((unsigned)time(NULL));
+    pollenMatrices.clear();
 
-    const int amountOfPollen = 6000;
-
-    for (int i = 0; i < amountOfPollen; i++) {
-        float targetDist = (m_currentTrack->getTotalLength() / amountOfPollen) * i;
-        float t = m_currentTrack->getTForDistance(targetDist);
-        glm::vec3 basePos = m_currentTrack->getPoint(t);
+    std::vector<glm::vec3> fdPoints = m_currentTrack->generateVisualPath(100); 
+    
+    for (size_t i = 0; i < fdPoints.size(); i++) {
+        glm::vec3 basePos = fdPoints[i];
 
         const float radius = 0.025f;
         float randX = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
@@ -82,6 +81,29 @@ void Scene::initPollen() {
 
         pollenMatrices.push_back(model);
     }
+}
+
+void Scene::initTrackLine() {
+    // Haal de datapunten op via Forward Differencing
+    std::vector<glm::vec3> linePoints = m_currentTrack->generateVisualPath(100);
+    trackLineVertexCount = static_cast<unsigned int>(linePoints.size());
+
+    // Genereer OpenGL buffers als deze nog niet bestaan
+    if (trackLineVAO == 0) {
+        glGenVertexArrays(1, &trackLineVAO);
+        glGenBuffers(1, &trackLineVBO);
+    }
+
+    glBindVertexArray(trackLineVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, trackLineVBO);
+    
+    // Stuur de berekende forward differencing punten naar de GPU
+    glBufferData(GL_ARRAY_BUFFER, linePoints.size() * sizeof(glm::vec3), linePoints.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
 }
 
 void Scene::initModels() {
@@ -195,7 +217,22 @@ void Scene::Draw(Shader& lightingShader, Shader& lampShader,
 
     drawBee(lightingShader);
     drawPollen(lightingShader, view, projection);
-
+    
+    // TEMP: Render de groene hulplijn die is gegenereerd via Forward Differencing
+    glDisable(GL_CULL_FACE);
+    lampShader.use();
+    lampShader.setMat4("model", glm::mat4(1.0f));
+    lampShader.setMat4("view", view);
+    lampShader.setMat4("projection", projection);
+    lampShader.setBool("hasDiffuseTexture", false);
+    lampShader.setVec3("fallbackColor", glm::vec3(0.0f, 1.0f, 0.0f)); // Groen
+    glLineWidth(4.0f);
+    glBindVertexArray(trackLineVAO);
+    glDrawArrays(GL_LINE_STRIP, 0, trackLineVertexCount);
+    glBindVertexArray(0);
+    glLineWidth(1.0f);
+    glEnable(GL_CULL_FACE);
+    //TEMP
     drawCrosshair(lampShader);
 }
 
@@ -205,7 +242,6 @@ void Scene::drawVillage(Shader& lightingShader, Shader& lampShader,
 
     glDisable(GL_CULL_FACE);
 
-    // Houd bij welke shader actief is zodat we geen onnodige use()-calls doen
     bool lampActive = false;
     bool lightActive = false;
 
@@ -328,6 +364,11 @@ void Scene::Delete() {
 
     glDeleteVertexArrays(1, &crosshairVAO);
     glDeleteBuffers(1, &crosshairVBO);
+    
+    if (trackLineVAO != 0) {
+        glDeleteVertexArrays(1, &trackLineVAO);
+        glDeleteBuffers(1, &trackLineVBO);
+    }
 
     lampMesh->Delete();
     delete lampMesh;
@@ -375,8 +416,9 @@ void Scene::toggleTrack() {
     }
     currentDistance = 0.0f;
     
-    pollenMatrices.clear();
+    // Update de pollen én de visuele tracklijn naar de nieuwe route via Forward Differencing!
     initPollen();
+    initTrackLine();
 }
 
 void Scene::toggleLamp() {

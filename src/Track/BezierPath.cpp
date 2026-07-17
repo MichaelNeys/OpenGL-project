@@ -81,3 +81,15 @@ float BezierPath::getTForDistance(float targetDistance) const {
 
     return 1.0f;
 }
+
+std::vector<glm::vec3> BezierPath::generateVisualPath(int stepsPerSegment) const {
+    std::vector<glm::vec3> totalPath;
+    
+    for (const auto& curve : m_curves) {
+        std::vector<glm::vec3> segmentPoints = curve.getPointsForwardDifferencing(stepsPerSegment);
+        // Voeg de punten toe aan de totale lijst
+        totalPath.insert(totalPath.end(), segmentPoints.begin(), segmentPoints.end());
+    }
+    
+    return totalPath;
+}
