@@ -31,6 +31,8 @@ running from that location
 
 `C`: switch between freeroam camera and the POV of the bee
 
+`SCROLL_UP` / `SCROLL_DOWN`: zoom in/out
+
 ## functions
 `B`: bloom
 
