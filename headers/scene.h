@@ -8,11 +8,13 @@
 #include "model.h"
 #include "skybox.h"
 #include "terrain.h"
-#include "BezierPath.h"
+#include "Track/BezierPath.h"
 
 class Scene {
 public:
     Scene();
+
+    void logCameraCoordinates(const glm::vec3& cameraPos);
 
     void Draw(Shader& lightingShader, Shader& lampShader, glm::mat4& view, glm::mat4& projection, glm::vec3& cameraPos);
     void Delete();
@@ -20,6 +22,8 @@ public:
     // Interactie
     bool redstoneLampsOn = true;
     void checkMouseClick(glm::mat4 view, glm::mat4 projection, int screenWidth, int screenHeight);
+    void toggleTrack();
+    void toggleLamp();
 
     // Camera getters
     glm::vec3 getBeePosition() const { return currentBeePos; }
@@ -38,8 +42,8 @@ private:
     // Hulpfuncties
     void setLightUniforms(Shader& shader);
     void drawVillage(Shader& lightingShader, Shader& lampShader, glm::mat4& view, glm::mat4& projection);
-    void drawBee (Shader& lightingShader);
-    void drawPollen (Shader& lightingShader, glm::mat4& view, glm::mat4& projection);
+    void drawBee(Shader& lightingShader);
+    void drawPollen(Shader& lightingShader, glm::mat4& view, glm::mat4& projection);
     void drawCrosshair(Shader& lampShader);
 
     // Scene objecten
@@ -56,8 +60,11 @@ private:
     glm::mat4 m_villageMatrix;
     std::vector<glm::mat4> pollenMatrices;
 
-    // Bee
-    BezierPath beePath;
+    // Wiskundige banen (Aangepast voor wisselspoor-ondersteuning)
+    BezierPath  m_mainTrack;
+    BezierPath  m_alternativeTrack;
+    BezierPath* m_currentTrack = nullptr;
+
     float currentDistance = 0.0f;
     glm::vec3 currentBeePos;
     glm::vec3 currentBeeDir;

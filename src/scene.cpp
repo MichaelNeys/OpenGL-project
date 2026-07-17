@@ -1,5 +1,6 @@
 #include "scene.h"
 #include "GeometryData.h"
+#include "Track/TrackPresets.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <vector>
@@ -9,7 +10,13 @@
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 
-Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
+Scene::Scene() 
+    : lightPos(0.0f, -1.0f, -12.0f),
+      m_mainTrack(TrackPresets::MainParcours),
+      m_alternativeTrack(TrackPresets::AlternativeTrack)
+{
+    m_currentTrack = &m_mainTrack;
+
     unsigned int vertexCount = 216;
     lampMesh = new Mesh(const_cast<float*>(Geometry::cubeVertices), vertexCount, true);
     terrain  = new Terrain();
@@ -56,9 +63,9 @@ void Scene::initPollen() {
     const int amountOfPollen = 6000;
 
     for (int i = 0; i < amountOfPollen; i++) {
-        float targetDist = (beePath.getTotalLength() / amountOfPollen) * i;
-        float t = beePath.getTForDistance(targetDist);
-        glm::vec3 basePos = beePath.getPoint(t);
+        float targetDist = (m_currentTrack->getTotalLength() / amountOfPollen) * i;
+        float t = m_currentTrack->getTForDistance(targetDist);
+        glm::vec3 basePos = m_currentTrack->getPoint(t);
 
         const float radius = 0.025f;
         float randX = ((rand() % 1000) / 1000.0f - 0.5f) * 2.0f * radius;
@@ -242,15 +249,15 @@ void Scene::drawBee(Shader& lightingShader) {
     lastTime = currentTime;
 
     currentDistance += 0.8f * deltaTime;
-    if (currentDistance > beePath.getTotalLength())
-        currentDistance = fmod(currentDistance, beePath.getTotalLength());
+    if (currentDistance > m_currentTrack->getTotalLength())
+        currentDistance = fmod(currentDistance, m_currentTrack->getTotalLength());
 
-    float t = beePath.getTForDistance(currentDistance);
-    glm::vec3 beePos = beePath.getPoint(t);
+    float t = m_currentTrack->getTForDistance(currentDistance);
+    glm::vec3 beePos = m_currentTrack->getPoint(t);
 
-    float tNext = beePath.getTForDistance(currentDistance + 0.1f);
+    float tNext = m_currentTrack->getTForDistance(currentDistance + 0.1f);
     if (tNext < t) tNext = 1.0f;
-    glm::vec3 nextPos = beePath.getPoint(tNext);
+    glm::vec3 nextPos = m_currentTrack->getPoint(tNext);
     glm::vec3 dir = glm::normalize(nextPos - beePos);
 
     currentBeePos = beePos;
@@ -350,10 +357,33 @@ void Scene::checkMouseClick(glm::mat4 view, glm::mat4 projection,
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0) {
-        redstoneLampsOn = !redstoneLampsOn;
-        std::cout << "Redstone lamp: " << (redstoneLampsOn ? "AAN" : "UIT") << std::endl;
+        std::cout << "INTERACTIE ADHV PICKING" << std::endl;
+        toggleTrack();
+        toggleLamp();
     } else {
-        std::cout << "Niet gepickt: "
-                  << (int)pixel[0] << ", " << (int)pixel[1] << ", " << (int)pixel[2] << std::endl;
+        std::cout << "GEEN INTERACTIE ADHV PICKING" << std::endl;
     }
+}
+
+void Scene::toggleTrack() {
+    if (m_currentTrack == &m_mainTrack) {
+        m_currentTrack = &m_alternativeTrack;
+        std::cout << "  track switched to: Alternative" << std::endl;
+    } else {
+        m_currentTrack = &m_mainTrack;
+        std::cout << "  track switched to: Main" << std::endl;
+    }
+    currentDistance = 0.0f;
+    
+    pollenMatrices.clear();
+    initPollen();
+}
+
+void Scene::toggleLamp() {
+    redstoneLampsOn = !redstoneLampsOn;
+    std::cout << "  lamp switched to: " << (redstoneLampsOn ? "ON" : "OFF") << std::endl;
+}
+
+void Scene::logCameraCoordinates(const glm::vec3& cameraPos) {
+    std::cout << "Camera Positie : X: " << cameraPos.x << " | Y: " << cameraPos.y << " | Z: " << cameraPos.z << std::endl;
 }

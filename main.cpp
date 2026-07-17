@@ -13,7 +13,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured);
+void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured, glm::vec3& cameraPos);
 
 Camera camera;
 bool firstMouse = true;
@@ -79,7 +79,7 @@ int main() {
         frameCount++;
         fpsTimer += deltaTime;
         if (fpsTimer >= 1.0f) {
-            std::cout << "FPS: " << frameCount << std::endl;
+            //std::cout << "FPS: " << frameCount << std::endl;
             frameCount = 0;
             fpsTimer   = 0.0f;
         }
@@ -101,7 +101,7 @@ int main() {
         if (isMouseCaptured) {
             camera.ProcessKeyboard(window, deltaTime);
         }        
-        processInput(window, scene, *postProcessor, *bloom, beeCamera, isMouseCaptured);
+        processInput(window, scene, *postProcessor, *bloom, beeCamera, isMouseCaptured, camera.Position);
 
         // --- 3. Scherm schoonmaken ---
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -188,7 +188,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     windowResized = true;
 }
 
-void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured) {
+void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured, glm::vec3& cameraPos) {
     // afsluiten (Q)
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -202,8 +202,14 @@ void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor
     // lampen toggelen (R)
     static bool rWasPressed = false;
     bool rPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
-    if (rPressed && !rWasPressed) scene.redstoneLampsOn = !scene.redstoneLampsOn;
+    if (rPressed && !rWasPressed) scene.toggleLamp();
     rWasPressed = rPressed;
+
+    // alternatief spoor toggelen (T)
+    static bool tWasPressed = false;
+    bool tPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
+    if (tPressed && !tWasPressed) scene.toggleTrack();
+    tWasPressed = tPressed;
 
     // Bee camera togglen (C)
     static bool cWasPressed = false;
@@ -213,6 +219,14 @@ void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor
         scene.showBee = !beeCamera;
     }
     cWasPressed = cPressed;
+
+    // coordinates loggen naar CLI (L)
+    static bool lWasPressed = false;
+    bool lPressed = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;    
+    if (lPressed && !lWasPressed) {
+        scene.logCameraCoordinates(cameraPos);
+    }
+    lWasPressed = lPressed;
 
     // Bloom togglen (B)
     static bool bWasPressed = false;
