@@ -63,7 +63,7 @@ int main() {
     PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
     Bloom* bloom = new Bloom(screenWidth, screenHeight);
     // inladen chroma key
-    BluePlane BluePlane("models/Overlay/test1.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
+    BluePlane BluePlane("textures/earth.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
 
     bool beeCamera = false;
 

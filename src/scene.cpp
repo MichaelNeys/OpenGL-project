@@ -15,12 +15,12 @@ Scene::Scene() : lightPos(0.0f, -1.0f, -12.0f) {
     terrain  = new Terrain();
 
     std::vector<std::string> skyFaces = {
-        "../models/indigo-re-skybox/indigo_ft.jpg",
-        "../models/indigo-re-skybox/indigo_bk.jpg",
-        "../models/indigo-re-skybox/indigo_up.jpg",
-        "../models/indigo-re-skybox/indigo_dn.jpg",
-        "../models/indigo-re-skybox/indigo_rt.jpg",
-        "../models/indigo-re-skybox/indigo_lf.jpg"
+        "../textures/indigo-re-skybox/indigo_ft.jpg",
+        "../textures/indigo-re-skybox/indigo_bk.jpg",
+        "../textures/indigo-re-skybox/indigo_up.jpg",
+        "../textures/indigo-re-skybox/indigo_dn.jpg",
+        "../textures/indigo-re-skybox/indigo_rt.jpg",
+        "../textures/indigo-re-skybox/indigo_lf.jpg"
     };
     skybox = new Skybox(skyFaces, "../shaders/skybox.vert", "../shaders/skybox.frag");
 
