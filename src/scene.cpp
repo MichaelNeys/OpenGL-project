@@ -107,7 +107,7 @@ void Scene::initTrackLine() {
 }
 
 void Scene::initModels() {
-    for (const std::string& base : { "models/Minecraft ville", "../models/Minecraft ville" }) {
+    for (const std::string& base : { "models", "../models" }) {
         std::string path = base + "/minecraft_ville.glb";
         if (std::filesystem::exists(path)) {
             Village = new Model(path);
@@ -117,7 +117,7 @@ void Scene::initModels() {
     }
     if (!Village) std::cerr << "Village model niet gevonden!" << std::endl;
 
-    for (const std::string& base : { "models/Bee-1", "../models/Bee-1" }) {
+    for (const std::string& base : { "models", "../models" }) {
         std::string path = base + "/minecraft_bee.glb";
         if (std::filesystem::exists(path)) {
             Bee = new Model(path);
