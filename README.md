@@ -1,6 +1,6 @@
 # cg-vc-project
 
-to build the project when you are inside the build folder
+to build the project when you are **inside the build** folder
 
 ```shell
 cmake ..
@@ -15,7 +15,7 @@ running from that location
 
 # keybindings
 
-## movenment
+## movement
 `WASD`: standard movement
 - `W`: forward
 - `A`: left
