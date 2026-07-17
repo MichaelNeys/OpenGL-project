@@ -38,4 +38,6 @@ running from that location
 
 `R`: turn lightpoints on/off
 
+`T`: switch to another track
+
 `V`: switch chroma keying on/off

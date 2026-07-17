@@ -46,6 +46,10 @@ Scene::Scene()
     initPickingFBO();
 }
 
+Scene::~Scene() {
+    Delete();
+}
+
 void Scene::initModels() {
     for (const std::string& base : { "models", "../models" }) {
         std::string path = base + "/minecraft_ville.glb";

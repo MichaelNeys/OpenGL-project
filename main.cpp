@@ -63,7 +63,7 @@ int main() {
     PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
     Bloom* bloom = new Bloom(screenWidth, screenHeight);
     // inladen chroma key
-    BluePlane BluePlane("textures/earth.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
+    BluePlane bluePlane("textures/earth.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
 
     bool beeCamera = false;
 
@@ -139,11 +139,11 @@ int main() {
         // --- 5. Renderen (Tekenen) ---
         bloom->bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
-        BluePlane.DrawPlane(view, projection);
+        bluePlane.DrawPlane(view, projection);
         // Overlay togglen (V)
         static bool vWasPressed = false;
         bool vPressed = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
-        if (vPressed && !vWasPressed) BluePlane.showOverlay = !BluePlane.showOverlay;
+        if (vPressed && !vWasPressed) bluePlane.showOverlay = !bluePlane.showOverlay;
         vWasPressed = vPressed;
 
         bloom->process();
@@ -159,7 +159,7 @@ int main() {
     scene.Delete();
     postProcessor->Delete();
     bloom->Delete();
-    BluePlane.Delete();
+    bluePlane.Delete();
     delete postProcessor;
     delete bloom;
     
