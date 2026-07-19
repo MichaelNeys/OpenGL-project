@@ -15,9 +15,7 @@ vec3 RGBtoYCbCr(vec3 rgb) {
 
 void main() {
     if (!showOverlay) {
-        // Toon puur blauw vlak als overlay uit is
-        FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-        return;
+        discard; 
     }
 
     vec4 texColor = texture(overlayTexture, TexCoords);
@@ -31,8 +29,9 @@ void main() {
     float chromaDiff = diffCb + diffCr;
     float saturation = length(texColor.rgb - vec3(dot(texColor.rgb, vec3(0.333))));
 
-    if (chromaDiff < 0.15 && saturation > 0.2)
+    if (chromaDiff < 0.15 && saturation > 0.2) {
         discard;
+    }
 
     FragColor = texColor;
 }
