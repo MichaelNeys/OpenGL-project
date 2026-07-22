@@ -3,7 +3,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-// 2 driehoeken om de plane voor te stellen
+/**
+ * @brief vertex-data voor een screen-aligned rechthoek in de rechterbovenhoek
+ * 
+ * Bevat 2 driehoeken met bijbehorende UV-textuurcoördinaten.
+ */
 static float planeVerts[] = {
      0.40f,  0.95f, 0.0f,    0.0f, 0.0f,
      0.40f,  0.40f, 0.0f,    0.0f, 1.0f,
@@ -14,12 +18,19 @@ static float planeVerts[] = {
      0.95f,  0.95f, 0.0f,    1.0f, 0.0f
 };
 
+/**
+ * @brief constructor voor BluePlane
+ * @param overlayImagePath path naar afbeelding
+ */
 BluePlane::BluePlane(const char* overlayImagePath) {
     setupPlane();
     planeShader = new Shader("shaders/bluePlane.vert", "shaders/bluePlane.frag");
     overlayTexture = loadTexture(overlayImagePath);
 }
 
+/**
+ * @brief destructor ruimt alle allocated OpenGL-buffers, textuur en shaders op
+ */
 BluePlane::~BluePlane() {
     if (planeVAO != 0) {
         glDeleteVertexArrays(1, &planeVAO);
@@ -34,6 +45,9 @@ BluePlane::~BluePlane() {
     }
 }
 
+/**
+ * @brief init VAO en VBO voor rechthoek
+ */
 void BluePlane::setupPlane() {
     glGenVertexArrays(1, &planeVAO);
     glGenBuffers(1, &planeVBO);
@@ -53,6 +67,11 @@ void BluePlane::setupPlane() {
     glBindVertexArray(0);
 }
 
+/**
+ * @brief laadt een afbeelding van path en initialiseert de OpenGL 2D-textuur
+ * @param path path naar file
+ * @return unsigned int generated OpenGL texture ID
+ */
 unsigned int BluePlane::loadTexture(const char* path) {
     unsigned int texID;
     glGenTextures(1, &texID);
@@ -84,6 +103,9 @@ unsigned int BluePlane::loadTexture(const char* path) {
     return texID;
 }
 
+/**
+ * @brief rendert 2D overlay over de huidige 3D scene als showOverlay aan staat
+ */
 void BluePlane::DrawPlane() {
     if (!showOverlay || !textureLoaded) return;
 
