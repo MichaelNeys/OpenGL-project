@@ -27,12 +27,12 @@ Scene::Scene()
     m_trackRenderer->updateTrackData(m_currentTrack);
 
     std::vector<std::string> skyFaces = {
-        "../textures/indigo-re-skybox/indigo_ft.jpg",
-        "../textures/indigo-re-skybox/indigo_bk.jpg",
-        "../textures/indigo-re-skybox/indigo_up.jpg",
-        "../textures/indigo-re-skybox/indigo_dn.jpg",
-        "../textures/indigo-re-skybox/indigo_rt.jpg",
-        "../textures/indigo-re-skybox/indigo_lf.jpg"
+        "../textures/skybox/front.jpg",
+        "../textures/skybox/back.jpg",
+        "../textures/skybox/up.jpg",
+        "../textures/skybox/down.jpg",
+        "../textures/skybox/right.jpg",
+        "../textures/skybox/left.jpg"
     };
     skybox = new Skybox(skyFaces, "../shaders/skybox.vert", "../shaders/skybox.frag");
 
