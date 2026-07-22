@@ -86,7 +86,6 @@ int main() {
 
         // updates wanneer resized
         if (windowResized && screenWidth > 0 && screenHeight > 0) {
-            postProcessor->Delete();
             delete bloom;
             delete postProcessor;
 
@@ -163,7 +162,6 @@ int main() {
 
     // cleanup en afsluiten van scene
     scene.Delete();
-    postProcessor->Delete();
     delete postProcessor;
     delete bloom;
     

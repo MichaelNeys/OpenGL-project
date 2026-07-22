@@ -11,11 +11,11 @@ enum class PostEffect {
 class PostProcessor {
 public:
     PostProcessor(int width, int height);
+    ~PostProcessor();
     void Bind(); 
     void Unbind();
     void Draw();
     void DrawFromTexture(unsigned int texture);
-    void Delete();
     void setEffect(PostEffect effect) { currentEffect = effect; }
     PostEffect getEffect() const { return currentEffect; }
 

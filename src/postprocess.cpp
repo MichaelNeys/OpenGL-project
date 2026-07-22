@@ -52,6 +52,15 @@ PostProcessor::PostProcessor(int width, int height)
     shader = new Shader("../shaders/quad.vert", "../shaders/postprocess.frag");
 }
 
+PostProcessor::~PostProcessor() {
+    glDeleteFramebuffers(1, &FBO);
+    glDeleteTextures(1, &textureColorbuffer);
+    glDeleteRenderbuffers(1, &RBO);
+    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteBuffers(1, &quadVBO);
+    delete shader;
+}
+
 void PostProcessor::Bind() {
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);
     glEnable(GL_DEPTH_TEST);
@@ -92,13 +101,4 @@ void PostProcessor::DrawFromTexture(unsigned int texture) {
     glBindVertexArray(0);
 
     glEnable(GL_DEPTH_TEST);
-}
-
-void PostProcessor::Delete() {
-    glDeleteFramebuffers(1, &FBO);
-    glDeleteTextures(1, &textureColorbuffer);
-    glDeleteRenderbuffers(1, &RBO);
-    glDeleteVertexArrays(1, &quadVAO);
-    glDeleteBuffers(1, &quadVBO);
-    delete shader;
 }
