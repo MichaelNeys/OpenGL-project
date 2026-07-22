@@ -63,7 +63,7 @@ int main() {
     PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
     Bloom* bloom = new Bloom(screenWidth, screenHeight);
     // inladen chroma key
-    BluePlane bluePlane("textures/spongebob.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
+    BluePlane bluePlane("textures/spongebob.jpg");
 
     bool beeCamera = false;
 
@@ -139,7 +139,7 @@ int main() {
         // --- 5. Renderen (Tekenen) ---
         bloom->bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
-        bluePlane.DrawPlane(view, projection);
+        bluePlane.DrawPlane();
 
         // Overlay togglen (O)
         static bool oWasPressed = false;
@@ -166,7 +166,6 @@ int main() {
     scene.Delete();
     postProcessor->Delete();
     bloom->Delete();
-    bluePlane.Delete();
     delete postProcessor;
     delete bloom;
     

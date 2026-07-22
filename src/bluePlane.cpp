@@ -14,12 +14,24 @@ static float planeVerts[] = {
      0.95f,  0.95f, 0.0f,    1.0f, 0.0f
 };
 
-BluePlane::BluePlane(const char* overlayImagePath, glm::vec3 position, glm::vec2 size)
-    : position(position), size(size)
-{
+BluePlane::BluePlane(const char* overlayImagePath) {
     setupPlane();
     planeShader = new Shader("shaders/bluePlane.vert", "shaders/bluePlane.frag");
     overlayTexture = loadTexture(overlayImagePath);
+}
+
+BluePlane::~BluePlane() {
+    if (planeVAO != 0) {
+        glDeleteVertexArrays(1, &planeVAO);
+        glDeleteBuffers(1, &planeVBO);
+    }
+    if (overlayTexture != 0) {
+        glDeleteTextures(1, &overlayTexture);
+    }
+    if (planeShader != nullptr) {
+        delete planeShader;
+        planeShader = nullptr;
+    }
 }
 
 void BluePlane::setupPlane() {
@@ -72,8 +84,8 @@ unsigned int BluePlane::loadTexture(const char* path) {
     return texID;
 }
 
-void BluePlane::DrawPlane(glm::mat4& view, glm::mat4& projection) {
-    if (!textureLoaded) return;
+void BluePlane::DrawPlane() {
+    if (!showOverlay || !textureLoaded) return;
 
     planeShader->use();
     planeShader->setInt("overlayTexture", 0);
@@ -92,12 +104,4 @@ void BluePlane::DrawPlane(glm::mat4& view, glm::mat4& projection) {
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-}
-
-void BluePlane::Delete() {
-    glDeleteVertexArrays(1, &planeVAO);
-    glDeleteBuffers(1, &planeVBO);
-    glDeleteTextures(1, &overlayTexture);
-    delete planeShader;
-    planeShader = nullptr;
 }
