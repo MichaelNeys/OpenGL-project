@@ -63,7 +63,7 @@ int main() {
     PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
     Bloom* bloom = new Bloom(screenWidth, screenHeight);
     // inladen chroma key
-    BluePlane bluePlane("textures/earth.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
+    BluePlane bluePlane("textures/spongebob.jpg", glm::vec3(-4.0f, 0.0f, -0.5f), glm::vec2(4.0f, 2.0f));
 
     bool beeCamera = false;
 
@@ -140,11 +140,18 @@ int main() {
         bloom->bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
         bluePlane.DrawPlane(view, projection);
-        // Overlay togglen (V)
-        static bool vWasPressed = false;
-        bool vPressed = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
-        if (vPressed && !vWasPressed) bluePlane.showOverlay = !bluePlane.showOverlay;
-        vWasPressed = vPressed;
+
+        // Overlay togglen (O)
+        static bool oWasPressed = false;
+        bool oPressed = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
+        if (oPressed && !oWasPressed) bluePlane.showOverlay = !bluePlane.showOverlay;
+        oWasPressed = oPressed;
+
+        // Chroma Keying togglen (G)
+        static bool gWasPressed = false;
+        bool gPressed = glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS;
+        if (gPressed && !gWasPressed) bluePlane.useChromaKey = !bluePlane.useChromaKey;
+        gWasPressed = gPressed;
 
         bloom->process();
         bloom->render();

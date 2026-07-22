@@ -3,15 +3,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+// 2 driehoeken om de plane voor te stellen
 static float planeVerts[] = {
-    // positie (x,y,z)      texcoords (u,v)
-    -0.5f, 0.5f, 0.0f,    0.0f, 0.0f,
-    -0.5f, -0.5f, 0.0f,    0.0f, 1.0f,
-     0.5f, -0.5f, 0.0f,    1.0f, 1.0f,
+     0.40f,  0.95f, 0.0f,    0.0f, 0.0f,
+     0.40f,  0.40f, 0.0f,    0.0f, 1.0f,
+     0.95f,  0.40f, 0.0f,    1.0f, 1.0f,
 
-    -0.5f, 0.5f, 0.0f,    0.0f, 0.0f,
-     0.5f, -0.5f, 0.0f,    1.0f, 1.0f,
-     0.5f, 0.5f, 0.0f,    1.0f, 0.0f
+     0.40f,  0.95f, 0.0f,    0.0f, 0.0f,
+     0.95f,  0.40f, 0.0f,    1.0f, 1.0f,
+     0.95f,  0.95f, 0.0f,    1.0f, 0.0f
 };
 
 BluePlane::BluePlane(const char* overlayImagePath, glm::vec3 position, glm::vec2 size)
@@ -73,32 +73,25 @@ unsigned int BluePlane::loadTexture(const char* path) {
 }
 
 void BluePlane::DrawPlane(glm::mat4& view, glm::mat4& projection) {
-    if (!enabled) return;
-
-    float aspectRatio = (imageHeight > 0) ? (float)imageWidth / (float)imageHeight : 1.0f;
-    float planeWidth = size.y * aspectRatio;
-    float planeHeight = size.y;
-
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, position);
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(planeWidth, planeHeight, 1.0f));
+    if (!textureLoaded) return;
 
     planeShader->use();
-    planeShader->setMat4("model", model);
-    planeShader->setMat4("view", view);
-    planeShader->setMat4("projection", projection);
-    planeShader->setInt ("overlayTexture", 0);
-    planeShader->setBool("showOverlay", showOverlay && textureLoaded);
+    planeShader->setInt("overlayTexture", 0);
+    planeShader->setBool("showOverlay", showOverlay);
+    planeShader->setBool("useChromaKey", useChromaKey);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, overlayTexture);
 
+    glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
+
     glBindVertexArray(planeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void BluePlane::Delete() {

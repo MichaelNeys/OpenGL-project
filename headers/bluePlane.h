@@ -14,8 +14,8 @@ public:
 
     void Delete();
 
-    bool enabled = true;
     bool showOverlay = false;
+    bool useChromaKey = true;
 
 private:
     unsigned int planeVAO, planeVBO;

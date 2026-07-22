@@ -42,4 +42,7 @@ running from that location
 
 `T`: switch to another track
 
-`V`: switch chroma keying on/off
+`O`: switch overlay on/off
+
+- `G`: switch chroma key (green screen) on/off
+  - default = on
