@@ -49,9 +49,9 @@ Scene::Scene()
 Scene::~Scene() {
     if (skybox) { delete skybox; skybox = nullptr; }
     if (terrain) { delete terrain; terrain = nullptr; }
-    if (lampMesh) { lampMesh->Delete(); delete lampMesh; lampMesh = nullptr; }
-    if (Village) { Village->Delete(); delete Village; Village = nullptr; }
-    if (Bee) { Bee->Delete(); delete Bee; Bee = nullptr; }
+    if (lampMesh) { delete lampMesh; lampMesh = nullptr; }
+    if (Village) { delete Village; Village = nullptr; }
+    if (Bee) { delete Bee; Bee = nullptr; }
     if (m_trackRenderer) { delete m_trackRenderer; m_trackRenderer = nullptr; }
     if (m_lightManager) { delete m_lightManager; m_lightManager = nullptr; }
     glDeleteVertexArrays(1, &crosshairVAO);

@@ -10,8 +10,8 @@ public:
            const std::string& vertPath,
            const std::string& fragPath);
     ~Skybox();
+
     void Draw(const glm::mat4& view, const glm::mat4& projection);
-    void Delete();
 
 private:
     unsigned int VAO, VBO, cubemapTexture;
