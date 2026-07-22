@@ -18,7 +18,6 @@ public:
     ~Scene();
 
     void Draw(Shader& lightingShader, Shader& lampShader, glm::mat4& view, glm::mat4& projection, glm::vec3& cameraPos);
-    void Delete();
 
     // Interactie & Toggles
     void checkMouseClick(glm::mat4 view, glm::mat4 projection, int screenWidth, int screenHeight);

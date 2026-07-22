@@ -47,7 +47,15 @@ Scene::Scene()
 }
 
 Scene::~Scene() {
-    Delete();
+    if (skybox) { skybox->Delete(); delete skybox; skybox = nullptr; }
+    if (terrain) { terrain->Delete(); delete terrain; terrain = nullptr; }
+    if (lampMesh) { lampMesh->Delete(); delete lampMesh; lampMesh = nullptr; }
+    if (Village) { Village->Delete(); delete Village; Village = nullptr; }
+    if (Bee) { Bee->Delete(); delete Bee; Bee = nullptr; }
+    if (m_trackRenderer) { delete m_trackRenderer; m_trackRenderer = nullptr; }
+    if (m_lightManager) { delete m_lightManager; m_lightManager = nullptr; }
+    glDeleteVertexArrays(1, &crosshairVAO);
+    glDeleteBuffers(1, &crosshairVBO);
 }
 
 void Scene::initModels() {
@@ -256,16 +264,4 @@ void Scene::toggleLamp() {
 
 void Scene::logCameraCoordinates(const glm::vec3& cameraPos) {
     std::cout << "Camera Positie : X: " << cameraPos.x << " | Y: " << cameraPos.y << " | Z: " << cameraPos.z << std::endl;
-}
-
-void Scene::Delete() {
-    if (skybox) { skybox->Delete(); delete skybox; skybox = nullptr; }
-    if (terrain) { terrain->Delete(); delete terrain; terrain = nullptr; }
-    if (lampMesh) { lampMesh->Delete(); delete lampMesh; lampMesh = nullptr; }
-    if (Village) { Village->Delete(); delete Village; Village = nullptr; }
-    if (Bee) { Bee->Delete(); delete Bee; Bee = nullptr; }
-    if (m_trackRenderer) { delete m_trackRenderer; m_trackRenderer = nullptr; }
-    if (m_lightManager) { delete m_lightManager; m_lightManager = nullptr; }
-    glDeleteVertexArrays(1, &crosshairVAO);
-    glDeleteBuffers(1, &crosshairVBO);
 }

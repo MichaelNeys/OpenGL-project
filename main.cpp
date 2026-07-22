@@ -161,7 +161,6 @@ int main() {
     }
 
     // cleanup en afsluiten van scene
-    scene.Delete();
     delete postProcessor;
     delete bloom;
     
