@@ -5,10 +5,11 @@
 class Bloom {
 public:
     Bloom(int width, int height);
+    ~Bloom();
+
     void bindScene();
     void process();
     void render();
-    void Delete();
     unsigned int getResultTexture() const;
 
     bool enabled = true;

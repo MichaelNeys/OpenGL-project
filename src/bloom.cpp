@@ -35,6 +35,25 @@ Bloom::Bloom(int width, int height) : width(width), height(height) {
     combineShader = new Shader("../shaders/quad.vert", "../shaders/bloom_combine.frag");
 }
 
+Bloom::~Bloom() {
+    glDeleteFramebuffers(1, &sceneFBO);
+    glDeleteTextures(1, &sceneTexture);
+    glDeleteRenderbuffers(1, &sceneRBO);
+
+    glDeleteFramebuffers(2, pingpongFBO);
+    glDeleteTextures(2, pingpongTexture);
+
+    glDeleteFramebuffers(1, &resultFBO);
+    glDeleteTextures(1, &resultTexture);
+
+    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteBuffers(1, &quadVBO);
+
+    delete brightExtractShader;
+    delete blurShader;
+    delete combineShader;
+}
+
 void Bloom::setupFBO(unsigned int& fbo, unsigned int& tex, unsigned int& rbo, bool withDepth) {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -140,19 +159,4 @@ void Bloom::renderQuad() {
 
 unsigned int Bloom::getResultTexture() const {
     return resultTexture;
-}
-
-void Bloom::Delete() {
-    glDeleteFramebuffers(1, &sceneFBO);
-    glDeleteTextures(1, &sceneTexture);
-    glDeleteFramebuffers(1, &resultFBO);
-    glDeleteTextures(1, &resultTexture);
-    glDeleteRenderbuffers(1, &sceneRBO);
-    glDeleteFramebuffers(2, pingpongFBO);
-    glDeleteTextures(2, pingpongTexture);
-    glDeleteVertexArrays(1, &quadVAO);
-    glDeleteBuffers(1, &quadVBO);
-    delete brightExtractShader;
-    delete blurShader;
-    delete combineShader;
 }
