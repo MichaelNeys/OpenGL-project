@@ -10,31 +10,38 @@ public:
     void bindScene();
     void process();
     void render();
+
     unsigned int getResultTexture() const;
 
     bool enabled = true;
-    float threshold = 0.8f; // helderheidsdrempel voor bloom
-    float strength  = 0.2f; // hoe sterk de bloom is
+    float threshold = 0.8f;
+    float strength = 0.5f;
+    int blurPasses = 10;
 
 private:
-    int width, height;
-    unsigned int resultFBO, resultTexture;
-    unsigned int blurPasses;
+    void setupFBO(unsigned int& fbo, unsigned int& tex, unsigned int& rbo, bool withDepth);
+    void setupPingpong(unsigned int& fbo, unsigned int& tex);
+    void renderQuad();
 
-    // Hoofd scene FBO
-    unsigned int sceneFBO, sceneTexture, sceneRBO;
+    int width = 0;
+    int height = 0;
 
-    // Twee ping-pong FBOs voor blur passes
-    unsigned int pingpongFBO[2], pingpongTexture[2];
+    unsigned int sceneFBO = 0;
+    unsigned int sceneTexture = 0;
+    unsigned int sceneRBO = 0;
 
-    // Quad
-    unsigned int quadVAO, quadVBO;
+    unsigned int pingpongFBO[2] = {0, 0};
+    unsigned int pingpongTexture[2] = {0, 0};
+
+    unsigned int resultFBO = 0;
+    unsigned int resultTexture = 0;
+
+    unsigned int quadVAO = 0;
+    unsigned int quadVBO = 0;
+
+    int lastBlurredIndex = 0;
 
     Shader* brightExtractShader = nullptr;
     Shader* blurShader = nullptr;
     Shader* combineShader = nullptr;
-
-    void setupFBO(unsigned int& fbo, unsigned int& tex, unsigned int& rbo, bool withDepth);
-    void setupPingpong(unsigned int& fbo, unsigned int& tex);
-    void renderQuad();
 };
