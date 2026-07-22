@@ -9,6 +9,7 @@ public:
     Skybox(const std::vector<std::string>& faces,
            const std::string& vertPath,
            const std::string& fragPath);
+    ~Skybox();
     void Draw(const glm::mat4& view, const glm::mat4& projection);
     void Delete();
 

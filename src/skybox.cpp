@@ -22,6 +22,25 @@ Skybox::Skybox(const std::vector<std::string>& faces,
     shader = new Shader(vertPath.c_str(), fragPath.c_str());
 }
 
+Skybox::~Skybox() {
+    if (VAO != 0) {
+        glDeleteVertexArrays(1, &VAO);
+        VAO = 0;
+    }
+    if (VBO != 0) {
+        glDeleteBuffers(1, &VBO);
+        VBO = 0;
+    }
+    if (cubemapTexture != 0) {
+        glDeleteTextures(1, &cubemapTexture);
+        cubemapTexture = 0;
+    }
+    if (shader != nullptr) {
+        delete shader;
+        shader = nullptr;
+    }
+}
+
 unsigned int Skybox::loadCubemap(const std::vector<std::string>& faces) {
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -73,12 +92,4 @@ void Skybox::Draw(const glm::mat4& view, const glm::mat4& projection) {
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
     glEnable(GL_CULL_FACE);
-}
-
-void Skybox::Delete() {
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteTextures(1, &cubemapTexture);
-    delete shader;
-    shader = nullptr;
 }

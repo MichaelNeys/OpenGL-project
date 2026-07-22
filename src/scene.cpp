@@ -47,8 +47,8 @@ Scene::Scene()
 }
 
 Scene::~Scene() {
-    if (skybox) { skybox->Delete(); delete skybox; skybox = nullptr; }
-    if (terrain) { terrain->Delete(); delete terrain; terrain = nullptr; }
+    if (skybox) { delete skybox; skybox = nullptr; }
+    if (terrain) { delete terrain; terrain = nullptr; }
     if (lampMesh) { lampMesh->Delete(); delete lampMesh; lampMesh = nullptr; }
     if (Village) { Village->Delete(); delete Village; Village = nullptr; }
     if (Bee) { Bee->Delete(); delete Bee; Bee = nullptr; }

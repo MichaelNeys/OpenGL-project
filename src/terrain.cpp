@@ -93,6 +93,13 @@ Terrain::Terrain() {
     generate();
 }
 
+Terrain::~Terrain() {
+    if (vertexCount > 0) {
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+    }
+}
+
 void Terrain::generate() {
     const int gx0 = -65, gx1 = 65;
     const int gz0 = -80, gz1 = 40;
@@ -199,11 +206,4 @@ void Terrain::Draw(Shader& shader) {
     glBindVertexArray(0);
 
     glEnable(GL_CULL_FACE);
-}
-
-void Terrain::Delete() {
-    if (vertexCount > 0) {
-        glDeleteVertexArrays(1, &VAO);
-        glDeleteBuffers(1, &VBO);
-    }
 }

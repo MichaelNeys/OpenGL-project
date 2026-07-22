@@ -7,8 +7,9 @@ class Shader;
 class Terrain {
 public:
     Terrain();
+    ~Terrain();
+    
     void Draw(Shader& shader);
-    void Delete();
 
 private:
     void generate();
