@@ -1,8 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <memory>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
 #include <Shader.h>
 #include <Camera.h>
 #include <Scene.h>
@@ -10,29 +12,39 @@
 #include <Bloom.h>
 #include <ChromaKey.h>
 
+// struct for input related state
+struct AppState {
+    bool beeCamera = false;
+    bool isMouseCaptured = false;
+    bool windowResized = false;
+    int screenWidth = 1920;
+    int screenHeight = 1080;
+};
+
+// globale vars
+Camera camera;
+AppState appState;
+bool firstMouse = true;
+float lastX = 960.0f, lastY = 540.0f;
+float deltaTime = 0.0f, lastFrame = 0.0f;
+
+// Callback prototypes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured, glm::vec3& cameraPos);
+void processInput(GLFWwindow* window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, ChromaKey& chromaKey, AppState& state);
 
-Camera camera;
-bool firstMouse = true;
-bool isMouseCaptured = false; 
-float lastX = 400.0f, lastY = 300.0f;
-float deltaTime = 0.0f, lastFrame = 0.0f;
-
-int screenWidth = 1920;
-int screenHeight = 1080;
-bool windowResized = false;
-
-GLFWwindow* initWindow() {
+GLFWwindow* initWindow(int width, int height) {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", NULL, NULL);
-    if (!window) { glfwTerminate(); return nullptr; }
+    GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", NULL, NULL);
+    if (!window) { 
+        glfwTerminate(); 
+        return nullptr; 
+    }
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
@@ -41,199 +53,169 @@ GLFWwindow* initWindow() {
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) return nullptr;
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
+        return nullptr;
     
     return window;
 }
 
 int main() {
-    GLFWwindow* window = initWindow();
+    GLFWwindow* window = initWindow(appState.screenWidth, appState.screenHeight);
     if (!window) return -1;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, appState.screenWidth, appState.screenHeight);
 
-    // inladen van shaders
+    // inladen van shaders, scene & effects
     Shader lightingShader("shaders/lighting.vert", "shaders/lighting.frag");
     Shader lampShader("shaders/light.vert", "shaders/light.frag");
     Scene scene;
-    // inladen postprocessor:
-    PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
-    Bloom* bloom = new Bloom(screenWidth, screenHeight);
+
+    auto postProcessor = std::make_unique<PostProcessor>(appState.screenWidth, appState.screenHeight);
+    auto bloom         = std::make_unique<Bloom>(appState.screenWidth, appState.screenHeight);
     // inladen chroma key
     ChromaKey chromaKey("textures/spongebob.jpg");
 
-    bool beeCamera = false;
-
+    // --- RENDER LOOP ---
     while (!glfwWindowShouldClose(window)) {
-        // --- 1. Tijd en Frame updates ---
-        float currentFrame = (float)glfwGetTime();
+        // 1. Tijd updates
+        float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // FPS teller
-        static int frameCount = 0;
-        static float fpsTimer = 0.0f;
-        frameCount++;
-        fpsTimer += deltaTime;
-        if (fpsTimer >= 1.0f) {
-            //std::cout << "FPS: " << frameCount << std::endl;
-            frameCount = 0;
-            fpsTimer   = 0.0f;
+        // Resizing afhandelen
+        if (appState.windowResized && appState.screenWidth > 0 && appState.screenHeight > 0) {
+            bloom = std::make_unique<Bloom>(appState.screenWidth, appState.screenHeight);
+            postProcessor = std::make_unique<PostProcessor>(appState.screenWidth, appState.screenHeight);
+            appState.windowResized = false;
         }
 
-        // updates wanneer resized
-        if (windowResized && screenWidth > 0 && screenHeight > 0) {
-            delete bloom;
-            delete postProcessor;
-
-            bloom = new Bloom(screenWidth, screenHeight);
-            postProcessor = new PostProcessor(screenWidth, screenHeight);
-            
-            windowResized = false;
-        }
-
-        // --- 2. Input verwerken ---
-        if (isMouseCaptured) {
+        // 2. Input verwerken
+        if (appState.isMouseCaptured) {
             camera.ProcessKeyboard(window, deltaTime);
         }        
-        processInput(window, scene, *postProcessor, *bloom, beeCamera, isMouseCaptured, camera.Position);
+        processInput(window, scene, *postProcessor, *bloom, chromaKey, appState);
 
-        // --- 3. Scherm schoonmaken ---
+        // 3. Clear Buffers 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // --- 4. Matrixen berekenen ---
-        glm::mat4 view;
-        if (beeCamera) {
-            glm::vec3 beePos = scene.getBeePosition();
-            glm::vec3 beeDir = scene.getBeeDirection();
-            view = glm::lookAt(beePos, beePos + beeDir, glm::vec3(0.0f, 1.0f, 0.0f));
-        } else {
-            view = camera.GetViewMatrix();
-        }
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (float)screenWidth / (float)screenHeight, 0.1f, 300.0f);
+        // 4. Matrixen bereken
+        glm::mat4 view = appState.beeCamera ? 
+            glm::lookAt(scene.getBeePosition(), scene.getBeePosition() + scene.getBeeDirection(), glm::vec3(0.0f, 1.0f, 0.0f)) : 
+            camera.GetViewMatrix();
 
-        // Muisklik check
+        glm::mat4 projection = glm::perspective(
+            glm::radians(camera.Fov), 
+            (float)appState.screenWidth / (float)appState.screenHeight, 
+            0.1f, 300.0f
+        );
+
+        // 5. Muisklik check
         static bool leftMousePressed = false;
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
             if (!leftMousePressed) {
                 leftMousePressed = true;
-                
-                if (!isMouseCaptured) {
-                    isMouseCaptured = true;
+                if (!appState.isMouseCaptured) {
+                    appState.isMouseCaptured = true;
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                     firstMouse = true;
                 } else {
-                    scene.checkMouseClick(view, projection, screenWidth, screenHeight);
+                    scene.checkMouseClick(view, projection, appState.screenWidth, appState.screenHeight);
                 }
             }
         } else {
             leftMousePressed = false;
         }
 
-        // --- 5. Renderen (Tekenen) ---
+        // 6. Render Pipeline (Scene -> Bloom -> PostProcess)
         bloom->bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
         chromaKey.DrawPlane();
-
-        // Overlay togglen (O)
-        static bool oWasPressed = false;
-        bool oPressed = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
-        if (oPressed && !oWasPressed) chromaKey.showOverlay = !chromaKey.showOverlay;
-        oWasPressed = oPressed;
-
-        // Chroma Keying togglen (G)
-        static bool gWasPressed = false;
-        bool gPressed = glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS;
-        if (gPressed && !gWasPressed) chromaKey.useChromaKey = !chromaKey.useChromaKey;
-        gWasPressed = gPressed;
 
         bloom->process();
         bloom->render();
         postProcessor->DrawFromTexture(bloom->getResultTexture());
 
-        // --- 6. Buffers wisselen en events pollen ---
+        // 7. swap Buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // cleanup en afsluiten van scene
-    delete postProcessor;
-    delete bloom;
-    
+    // Geen 'delete' nodig! unique_ptr ruimt alles automatisch netjes op
     glfwTerminate();
     return 0;
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    if (!isMouseCaptured) return;
+// --- CALLBACKS ---
 
-    if (firstMouse) { lastX = xpos; lastY = ypos; firstMouse = false; }
-    float xoffset = xpos - lastX, yoffset = lastY - ypos;
-    lastX = xpos; lastY = ypos;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (!appState.isMouseCaptured) return;
+
+    if (firstMouse) { 
+        lastX = static_cast<float>(xpos); 
+        lastY = static_cast<float>(ypos); 
+        firstMouse = false; 
+    }
+    float xoffset = static_cast<float>(xpos) - lastX;
+    float yoffset = lastY - static_cast<float>(ypos);
+    lastX = static_cast<float>(xpos); 
+    lastY = static_cast<float>(ypos);
+    
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    if (!isMouseCaptured) return;
-    camera.ProcessMouseScroll(yoffset);
+    if (!appState.isMouseCaptured) return;
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
-    screenWidth = width;
-    screenHeight = height;
-    windowResized = true;
+    appState.screenWidth = width;
+    appState.screenHeight = height;
+    appState.windowResized = true;
 }
 
-void processInput(GLFWwindow *window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, bool& beeCamera, bool& isMouseCaptured, glm::vec3& cameraPos) {
+// --- INPUT HANDLER ---
+
+void processInput(GLFWwindow* window, Scene& scene, PostProcessor& postProcessor, Bloom& bloom, ChromaKey& chromaKey, AppState& state) {
     // afsluiten (Q)
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
         
     // muis loslaten (ESC)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        isMouseCaptured = false;
+        state.isMouseCaptured = false;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
-    // lampen toggelen (R)
-    static bool rWasPressed = false;
-    bool rPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
-    if (rPressed && !rWasPressed) scene.toggleLamp();
-    rWasPressed = rPressed;
+    // single key-presses helper
+    auto isKeyPressedOnce = [window](int key) {
+        static bool keyStates[GLFW_KEY_LAST] = { false };
+        bool isPressed = glfwGetKey(window, key) == GLFW_PRESS;
+        if (isPressed && !keyStates[key]) {
+            keyStates[key] = true;
+            return true;
+        } else if (!isPressed) {
+            keyStates[key] = false;
+        }
+        return false;
+    };
 
-    // alternatief spoor toggelen (T)
-    static bool tWasPressed = false;
-    bool tPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
-    if (tPressed && !tWasPressed) scene.toggleTrack();
-    tWasPressed = tPressed;
-
-    // Bee camera togglen (C)
-    static bool cWasPressed = false;
-    bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
-    if (cPressed && !cWasPressed) {
-        beeCamera = !beeCamera;
-        scene.showBee = !beeCamera;
+    // Toggles
+    if (isKeyPressedOnce(GLFW_KEY_R)) scene.toggleLamp();
+    if (isKeyPressedOnce(GLFW_KEY_T)) scene.toggleTrack();
+    if (isKeyPressedOnce(GLFW_KEY_C)) {
+        state.beeCamera = !state.beeCamera;
+        scene.showBee = !state.beeCamera;
     }
-    cWasPressed = cPressed;
-
-    // coordinates loggen naar CLI (L)
-    static bool lWasPressed = false;
-    bool lPressed = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;    
-    if (lPressed && !lWasPressed) {
-        scene.logCameraCoordinates(cameraPos);
-    }
-    lWasPressed = lPressed;
-
-    // Bloom togglen (B)
-    static bool bWasPressed = false;
-    bool bPressed = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
-    if (bPressed && !bWasPressed) bloom.enabled = !bloom.enabled;
-    bWasPressed = bPressed;
+    if (isKeyPressedOnce(GLFW_KEY_L)) scene.logCameraCoordinates(camera.Position);
+    if (isKeyPressedOnce(GLFW_KEY_B)) bloom.enabled = !bloom.enabled;
+    if (isKeyPressedOnce(GLFW_KEY_O)) chromaKey.showOverlay = !chromaKey.showOverlay;
+    if (isKeyPressedOnce(GLFW_KEY_G)) chromaKey.useChromaKey = !chromaKey.useChromaKey;
 
     // Post-processing effecten
     if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) postProcessor.setEffect(PostEffect::NONE);
