@@ -1,4 +1,4 @@
-#include "model.h"
+#include "Model.h"
 #include <filesystem>
 #include <unordered_map>
 #include <iostream>

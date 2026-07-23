@@ -1,8 +1,8 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <vector>
-#include "../mesh.h"
-#include "../shader.h"
+#include "../Mesh.h"
+#include "../Shader.h"
 #include "BezierPath.h"
 
 class TrackRenderer {

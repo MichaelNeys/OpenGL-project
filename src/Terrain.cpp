@@ -1,6 +1,6 @@
-#include "terrain.h"
+#include "Terrain.h"
 #include "GeometryData.h"
-#include "shader.h"
+#include "Shader.h"
 #include <glm/glm.hpp>
 #include <cmath>
 #include <algorithm>

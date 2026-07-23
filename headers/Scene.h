@@ -3,11 +3,11 @@
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
-#include "shader.h"
-#include "mesh.h"
-#include "model.h"
-#include "skybox.h"
-#include "terrain.h"
+#include "Shader.h"
+#include "Mesh.h"
+#include "Model.h"
+#include "Skybox.h"
+#include "Terrain.h"
 #include "Track/BezierPath.h"
 #include "Track/TrackRenderer.h"
 #include "Lighting/LightManager.h"

@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
-#include "../shader.h"
+#include "../Shader.h"
 
 class LightManager {
 public:

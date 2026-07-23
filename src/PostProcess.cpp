@@ -1,4 +1,4 @@
-#include "postprocess.h"
+#include "PostProcess.h"
 #include <iostream>
 
 static float quadVertices[] = {

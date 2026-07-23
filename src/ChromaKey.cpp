@@ -1,4 +1,4 @@
-#include "chromaKey.h"
+#include "ChromaKey.h"
 #include "stb_image.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>

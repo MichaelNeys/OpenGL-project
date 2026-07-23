@@ -3,12 +3,12 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <shader.h>
-#include <camera.h>
-#include <scene.h>
-#include <postprocess.h>
-#include <bloom.h>
-#include <chromaKey.h>
+#include <Shader.h>
+#include <Camera.h>
+#include <Scene.h>
+#include <PostProcess.h>
+#include <Bloom.h>
+#include <ChromaKey.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);

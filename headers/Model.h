@@ -8,8 +8,8 @@
 #include <vector>
 #include <iostream>
 
-#include "mesh.h"
-#include "shader.h"
+#include "Mesh.h"
+#include "Shader.h"
 
 /**
  * @class Model

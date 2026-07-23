@@ -64,17 +64,17 @@ target_link_libraries(GLAD PRIVATE OpenGL::GL)
 # --- 6. Main Executable ---
 add_executable(opengl_project
     main.cpp
-    src/camera.cpp
-    src/mesh.cpp
-    src/model.cpp
-    src/scene.cpp
-    src/shader.cpp
+    src/Camera.cpp
+    src/Mesh.cpp
+    src/Model.cpp
+    src/Scene.cpp
+    src/Shader.cpp
     src/stb_image.cpp
-    src/terrain.cpp
-    src/skybox.cpp
-    src/postprocess.cpp
-    src/bloom.cpp
-    src/chromaKey.cpp
+    src/Terrain.cpp
+    src/Skybox.cpp
+    src/PostProcess.cpp
+    src/Bloom.cpp
+    src/ChromaKey.cpp
     src/Track/BezierCurve.cpp
     src/Track/BezierPath.cpp
     src/Track/TrackRenderer.cpp

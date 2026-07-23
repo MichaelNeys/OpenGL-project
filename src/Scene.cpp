@@ -1,4 +1,4 @@
-#include "scene.h"
+#include "Scene.h"
 #include "GeometryData.h"
 #include "Track/TrackPresets.h"
 #include <glm/gtc/matrix_transform.hpp>

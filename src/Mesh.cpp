@@ -1,4 +1,4 @@
-#include "mesh.h"
+#include "Mesh.h"
 #include <glm/glm.hpp>
 
 Mesh::Mesh(const float* vertices, unsigned int vertexCount, bool hasNormals) {

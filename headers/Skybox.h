@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
-#include "shader.h"
+#include "Shader.h"
 
 class Skybox {
 public:
