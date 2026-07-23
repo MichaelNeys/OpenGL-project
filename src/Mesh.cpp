@@ -1,6 +1,16 @@
 #include "Mesh.h"
 #include <glm/glm.hpp>
 
+/**
+ * @brief constructor op basis ve float array
+ * 
+ * Wordt voornamelijk gebruikt voor eenvoudige/primitieve vormen (zoals een kubus of quad).
+ * Stel automatisch de VAO en VBO in.
+ * 
+ * @param vertices Pointer naar de float array met vertexdata.
+ * @param vertexCount Totaal aantal floats in de vertex array.
+ * @param hasNormals Geeft aan of de array ook normaalvectoren bevat (stride 6 vs 3).
+ */
 Mesh::Mesh(const float* vertices, unsigned int vertexCount, bool hasNormals) {
     this->vertexCount = vertexCount;
     this->stride = hasNormals ? 6 : 3;
@@ -21,6 +31,15 @@ Mesh::Mesh(const float* vertices, unsigned int vertexCount, bool hasNormals) {
     glBindVertexArray(0);
 }
 
+/**
+ * @brief constructor op basis van Vertex-structs, indices en textures
+ * 
+ * gebruikt bij inladen van 3D models via Assimp
+ * 
+ * @param vertices vertex structs (positie, normaal, uv coords)
+ * @param indices vertex indices voor Element Buffer Object (EBO)
+ * @param textures gekoppelde texture structs
+ */
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
     : _vertices(vertices), _indices(indices), _textures(textures)
 {
@@ -48,10 +67,16 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
     glBindVertexArray(0);
 }
 
+/**
+ * @brief destructor, geheugen vrijgeven met helperfuntie
+ */
 Mesh::~Mesh() {
     cleanup();
 }
 
+/**
+ * @brief clear openGL buffers
+ */
 void Mesh::cleanup() {
     if (VAO != 0) {
         glDeleteVertexArrays(1, &VAO);
@@ -69,6 +94,13 @@ void Mesh::cleanup() {
 
 // --- MOVE SEMANTICS ---
 
+/**
+ * @brief Move Constructor
+ * 
+ * OpenGL handles / structures overnemen ve ander Mesh object
+ * 
+ * @param other tijdelijke Mesh waarvan het eigenaarschap overgenomen wordt
+ */
 Mesh::Mesh(Mesh&& other) noexcept {
     VAO = other.VAO;
     VBO = other.VBO;
@@ -84,6 +116,14 @@ Mesh::Mesh(Mesh&& other) noexcept {
     other.EBO = 0;
 }
 
+/**
+ * @brief Move Assignment Operator
+ * 
+ * Clear openGL buffers en neem alles over van een ander Mesh object
+ * 
+ * @param other tijdelijke Mesh die toegewezen wordt
+ * @return Mesh& reference naar het huidige Mesh object
+ */
 Mesh& Mesh::operator=(Mesh&& other) noexcept {
     if (this != &other) {
         cleanup();
@@ -104,6 +144,9 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept {
     return *this;
 }
 
+/**
+ * @brief rendert mesh via glDrawArrays
+ */
 void Mesh::Draw() {
     if (VAO == 0) return;
     glBindVertexArray(VAO);
@@ -111,6 +154,13 @@ void Mesh::Draw() {
     glBindVertexArray(0);
 }
 
+/**
+ * @brief rendert mesh via glDrawElements (EBO)
+ * 
+ * Binds couplled diffuse en normal textures aan sampler-uniforms
+ * 
+ * @param shader reference naar shader
+ */
 void Mesh::Draw(Shader& shader) {
     if (VAO == 0) return;
 
