@@ -19,7 +19,7 @@ public:
 
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f));
 
-    glm::mat4 GetViewMatrix();
+    glm::mat4 GetViewMatrix() const;
     void ProcessKeyboard(GLFWwindow* window, float deltaTime);
     void ProcessMouseMovement(float xoffset, float yoffset);
     void ProcessMouseScroll(float yoffset);
