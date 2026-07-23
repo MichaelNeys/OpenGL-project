@@ -51,13 +51,12 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglfw3-dev libglm-dev libgl1-mesa-dev xorg-dev
+        sudo apt-get install -y ninja-build libglfw3-dev libglm-dev libgl1-mesa-dev xorg-dev
 
     - name: Install Dependencies (Windows)
       if: runner.os == 'Windows'
       run: vcpkg install glm glfw3:x64-windows
 
-    
     - name: Set reusable strings
       id: strings
       shell: bash
@@ -75,9 +74,11 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -G Ninja
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        ${{ steps.strings.outputs.vcpkg_toolchain }}
         -S ${{ github.workspace }}
 
     - name: Build
