@@ -64,6 +64,7 @@ target_link_libraries(GLAD PRIVATE OpenGL::GL)
 # --- 6. Main Executable ---
 add_executable(opengl_project
     main.cpp
+    src/InputManager.cpp
     src/Camera.cpp
     src/Mesh.cpp
     src/Model.cpp
