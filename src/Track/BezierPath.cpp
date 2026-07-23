@@ -1,6 +1,15 @@
 #include "Track/BezierPath.h"
 #include <iostream>
+#include <algorithm>
 
+/**
+ * @brief constructor
+ * 
+ * creeert segmenten vd samengestelde curve op basis van controlepunten
+ * init LUT voor booglengte
+ * 
+ * @param controlPoints vector controlepunten (aantal = 3n+1)
+ */
 BezierPath::BezierPath(const std::vector<glm::vec3>& controlPoints) {
     if (controlPoints.size() < 4 || (controlPoints.size() - 1) % 3 != 0) {
         std::cerr << "Fout: Aantal controlepunten moet voldoen aan (3n + 1) voor Cubic Bézier Splines! (bv. 4, 7, 10, 13...)" << std::endl;
@@ -21,6 +30,14 @@ BezierPath::BezierPath(const std::vector<glm::vec3>& controlPoints) {
     buildLUT(1000); 
 }
 
+/**
+ * @brief berekent positie op curve voor t tussen 0 en 1
+ * 
+ * eerst welk deelsegment, dan lokale t voor dat segment
+ * 
+ * @param t parameter tussen 0 (begin) en 1 (einde)
+ * @return glm::vec3 positie op curve
+ */
 glm::vec3 BezierPath::getPoint(float t) const {
     if (m_curves.empty()) return glm::vec3(0.0f);
     
@@ -42,8 +59,17 @@ glm::vec3 BezierPath::getPoint(float t) const {
     return m_curves[curveIndex].getPoint(localT);
 }
 
+/**
+ * @brief build LUT voor booglengte aan t te linken
+ * 
+ * zo creeeren we een constante snelheid over de curve
+ * hoe de controlepunten ook verspreid liggen
+ * 
+ * @param resolution aantal samples dat gebruikt wordt om de lengte te benaderen
+ */
 void BezierPath::buildLUT(int resolution) {
     arcLengthLUT.clear();
+    arcLengthLUT.reserve(resolution + 1);
     arcLengthLUT.push_back(0.0f);
 
     glm::vec3 prevPoint = getPoint(0.0f);
@@ -62,32 +88,48 @@ void BezierPath::buildLUT(int resolution) {
     totalCurveLength = currentLen;
 }
 
+/**
+ * @brief Zette een gewenste fysieke afstand om naar de bijbehorende t-parameter [0.0, 1.0].
+ * 
+ * maakt gebruik van std::lower_bound op  LUT en een lineaire interpolatie
+ * voor een nauwkeurige en snelle t-waarde
+ * 
+ * @param targetDistance afstand vanaf begin vd curve
+ * @return float t parameter bij die afstand
+ */
 float BezierPath::getTForDistance(float targetDistance) const {
     if (targetDistance <= 0.0f) return 0.0f;
     if (targetDistance >= totalCurveLength) return 1.0f;
 
-    // Zoek binnen de LUT naar het juiste interval (Binary search is nóg sneller, maar dit werkt prima)
-    for (size_t i = 0; i < arcLengthLUT.size() - 1; i++) {
-        if (targetDistance >= arcLengthLUT[i] && targetDistance <= arcLengthLUT[i + 1]) {
-            float segLen = arcLengthLUT[i + 1] - arcLengthLUT[i];
-            float segFrac = (targetDistance - arcLengthLUT[i]) / segLen;
+    // Binary Search op arcLengthLUT
+    auto iterator = std::lower_bound(arcLengthLUT.begin(), arcLengthLUT.end(), targetDistance);
+    size_t index = std::distance(arcLengthLUT.begin(), iterator);
 
-            float t0 = static_cast<float>(i) / static_cast<float>(arcLengthLUT.size() - 1);
-            float t1 = static_cast<float>(i + 1) / static_cast<float>(arcLengthLUT.size() - 1);
+    if (index == 0) return 0.0f;
 
-            return t0 + segFrac * (t1 - t0);
-        }
-    }
+    size_t i = index - 1;
+    float segLen = arcLengthLUT[i + 1] - arcLengthLUT[i];
+    float segFrac = (targetDistance - arcLengthLUT[i]) / segLen;
 
-    return 1.0f;
+    float t0 = static_cast<float>(i) / static_cast<float>(arcLengthLUT.size() - 1);
+    float t1 = static_cast<float>(i + 1) / static_cast<float>(arcLengthLUT.size() - 1);
+
+    return t0 + segFrac * (t1 - t0);
 }
 
+/**
+ * @brief genereert punten die het pad voorstellen
+ * 
+ * maakt gebruik van Forward Differencing voor snelle berekening van punten per segment
+ * 
+ * @param stepsPerSegment punten per segment
+ * @return std::vector<glm::vec3> array met punten die het pad voorstellen
+ */
 std::vector<glm::vec3> BezierPath::generateVisualPath(int stepsPerSegment) const {
     std::vector<glm::vec3> totalPath;
     
     for (const auto& curve : m_curves) {
         std::vector<glm::vec3> segmentPoints = curve.getPointsForwardDifferencing(stepsPerSegment);
-        // Voeg de punten toe aan de totale lijst
         totalPath.insert(totalPath.end(), segmentPoints.begin(), segmentPoints.end());
     }
     
