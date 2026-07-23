@@ -8,7 +8,7 @@
 #include <scene.h>
 #include <postprocess.h>
 #include <bloom.h>
-#include <bluePlane.h>
+#include <chromaKey.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -63,7 +63,7 @@ int main() {
     PostProcessor* postProcessor = new PostProcessor(screenWidth, screenHeight);
     Bloom* bloom = new Bloom(screenWidth, screenHeight);
     // inladen chroma key
-    BluePlane bluePlane("textures/spongebob.jpg");
+    ChromaKey chromaKey("textures/spongebob.jpg");
 
     bool beeCamera = false;
 
@@ -137,18 +137,18 @@ int main() {
         // --- 5. Renderen (Tekenen) ---
         bloom->bindScene();
         scene.Draw(lightingShader, lampShader, view, projection, camera.Position);
-        bluePlane.DrawPlane();
+        chromaKey.DrawPlane();
 
         // Overlay togglen (O)
         static bool oWasPressed = false;
         bool oPressed = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
-        if (oPressed && !oWasPressed) bluePlane.showOverlay = !bluePlane.showOverlay;
+        if (oPressed && !oWasPressed) chromaKey.showOverlay = !chromaKey.showOverlay;
         oWasPressed = oPressed;
 
         // Chroma Keying togglen (G)
         static bool gWasPressed = false;
         bool gPressed = glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS;
-        if (gPressed && !gWasPressed) bluePlane.useChromaKey = !bluePlane.useChromaKey;
+        if (gPressed && !gWasPressed) chromaKey.useChromaKey = !chromaKey.useChromaKey;
         gWasPressed = gPressed;
 
         bloom->process();

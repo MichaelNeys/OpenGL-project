@@ -20,7 +20,7 @@ Scene::Scene()
     m_trackRenderer = new TrackRenderer();
 
     unsigned int vertexCount = 216;
-    lampMesh = new Mesh(const_cast<float*>(Geometry::cubeVertices), vertexCount, true);
+    lampMesh = new Mesh(Geometry::cubeVertices.data(), vertexCount, true);
     terrain  = new Terrain();
 
     m_trackRenderer->initialize(lampMesh);
@@ -78,7 +78,7 @@ void Scene::initCrosshair() {
 
     glBindVertexArray(crosshairVAO);
     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Geometry::crosshairVertices), Geometry::crosshairVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Geometry::crosshairVertices), Geometry::crosshairVertices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);

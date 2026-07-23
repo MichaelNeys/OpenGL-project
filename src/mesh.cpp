@@ -1,7 +1,7 @@
 #include "mesh.h"
 #include <glm/glm.hpp>
 
-Mesh::Mesh(float* vertices, unsigned int vertexCount, bool hasNormals) {
+Mesh::Mesh(const float* vertices, unsigned int vertexCount, bool hasNormals) {
     this->vertexCount = vertexCount;
     this->stride = hasNormals ? 6 : 3;
 

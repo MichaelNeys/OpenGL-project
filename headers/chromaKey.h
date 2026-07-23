@@ -3,10 +3,10 @@
 #include <glm/glm.hpp>
 #include "shader.h"
 
-class BluePlane {
+class ChromaKey {
 public:
-    explicit BluePlane(const char* overlayImagePath);
-    ~BluePlane();
+    explicit ChromaKey(const char* overlayImagePath);
+    ~ChromaKey();
 
     void DrawPlane();
 

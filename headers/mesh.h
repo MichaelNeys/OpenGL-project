@@ -20,7 +20,7 @@ struct Texture {
 class Mesh {
 public:
     // Constructor 1: Simpele float array
-    Mesh(float* vertices, unsigned int vertexCount, bool hasNormals);
+    Mesh(const float* vertices, unsigned int vertexCount, bool hasNormals);
     
     // Constructor 2: Model mesh met struct Vertex/Indices/Textures
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);

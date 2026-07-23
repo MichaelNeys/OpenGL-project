@@ -1,4 +1,4 @@
-#include "bluePlane.h"
+#include "chromaKey.h"
 #include "stb_image.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -19,19 +19,19 @@ static float planeVerts[] = {
 };
 
 /**
- * @brief constructor voor BluePlane
+ * @brief constructor voor ChromaKey
  * @param overlayImagePath path naar afbeelding
  */
-BluePlane::BluePlane(const char* overlayImagePath) {
+ChromaKey::ChromaKey(const char* overlayImagePath) {
     setupPlane();
-    planeShader = new Shader("shaders/bluePlane.vert", "shaders/bluePlane.frag");
+    planeShader = new Shader("shaders/chromaKey.vert", "shaders/chromaKey.frag");
     overlayTexture = loadTexture(overlayImagePath);
 }
 
 /**
  * @brief destructor ruimt alle allocated OpenGL-buffers, textuur en shaders op
  */
-BluePlane::~BluePlane() {
+ChromaKey::~ChromaKey() {
     if (planeVAO != 0) {
         glDeleteVertexArrays(1, &planeVAO);
         glDeleteBuffers(1, &planeVBO);
@@ -48,7 +48,7 @@ BluePlane::~BluePlane() {
 /**
  * @brief init VAO en VBO voor rechthoek
  */
-void BluePlane::setupPlane() {
+void ChromaKey::setupPlane() {
     glGenVertexArrays(1, &planeVAO);
     glGenBuffers(1, &planeVBO);
 
@@ -72,7 +72,7 @@ void BluePlane::setupPlane() {
  * @param path path naar file
  * @return unsigned int generated OpenGL texture ID
  */
-unsigned int BluePlane::loadTexture(const char* path) {
+unsigned int ChromaKey::loadTexture(const char* path) {
     unsigned int texID;
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_2D, texID);
@@ -93,9 +93,9 @@ unsigned int BluePlane::loadTexture(const char* path) {
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
         textureLoaded = true;
-        std::cout << "BluePlane overlay geladen: " << path << std::endl;
+        std::cout << "ChromaKey overlay geladen: " << path << std::endl;
     } else {
-        std::cerr << "BluePlane: kon afbeelding niet laden: " << path << std::endl;
+        std::cerr << "ChromaKey: kon afbeelding niet laden: " << path << std::endl;
         textureLoaded = false;
     }
 
@@ -106,7 +106,7 @@ unsigned int BluePlane::loadTexture(const char* path) {
 /**
  * @brief rendert 2D overlay over de huidige 3D scene als showOverlay aan staat
  */
-void BluePlane::DrawPlane() {
+void ChromaKey::DrawPlane() {
     if (!showOverlay || !textureLoaded) return;
 
     planeShader->use();
