@@ -2,8 +2,16 @@
 #include <cstdlib>
 #include <ctime>
 
+/**
+ * @brief constructor
+ */
 TrackRenderer::TrackRenderer() {}
 
+/**
+ * @brief destructor
+ * 
+ * cleared OpenGL buffers 
+ */
 TrackRenderer::~TrackRenderer() {
     if (m_trackLineVAO != 0) {
         glDeleteVertexArrays(1, &m_trackLineVAO);
@@ -11,10 +19,23 @@ TrackRenderer::~TrackRenderer() {
     }
 }
 
+/**
+ * @brief initialiseert de renderer
+ * 
+ * @param pollenMesh pointer to mesh
+ */
 void TrackRenderer::initialize(Mesh* pollenMesh) {
     m_pollenMesh = pollenMesh;
 }
 
+/**
+ * @brief werkt de visuele representatie van het spoor en de positie van de pollen bij
+ * 
+ * maakt een nieuwe lijn voor de track met forward differencing
+ * willekeurig transformatiematrices voor pollen
+ * 
+ * @param currentTrack pointer to track data
+ */
 void TrackRenderer::updateTrackData(const BezierPath* currentTrack) {
     if (!currentTrack) return;
 
@@ -57,6 +78,14 @@ void TrackRenderer::updateTrackData(const BezierPath* currentTrack) {
     }
 }
 
+/**
+ * @brief rendert track lijn en pollen
+ * 
+ * @param lightingShader reference to the lighting shader
+ * @param lampShader reference to the lamp shader
+ * @param view reference to view matrix
+ * @param projection reference to projection matrix
+ */
 void TrackRenderer::Draw(Shader& lightingShader, Shader& lampShader, const glm::mat4& view, const glm::mat4& projection) {
     // Teken Pollen
     if (m_pollenMesh) {
