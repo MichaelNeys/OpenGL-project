@@ -125,7 +125,7 @@ int main() {
 
         bloom->process();
         bloom->render();
-        postProcessor->DrawFromTexture(bloom->getResultTexture());
+        postProcessor->Draw(bloom->getResultTexture());
 
         // 6. Swap Buffers
         glfwSwapBuffers(window);

@@ -14,8 +14,7 @@ public:
     ~PostProcessor();
     void Bind(); 
     void Unbind();
-    void Draw();
-    void DrawFromTexture(unsigned int texture);
+    void Draw(unsigned int texture);
     void setEffect(PostEffect effect) { currentEffect = effect; }
     PostEffect getEffect() const { return currentEffect; }
 

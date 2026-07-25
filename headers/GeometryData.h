@@ -99,4 +99,15 @@ namespace Geometry {
 
     // aantal lichten
     inline constexpr size_t numPointLights = pointLightPositions.size();
+
+    // SCREEN QUAD VERTICES
+    inline constexpr std::array<float, 24> quadVertices = {
+        -1.0f,  1.0f,       0.0f, 1.0f,
+        -1.0f, -1.0f,       0.0f, 0.0f,
+         1.0f, -1.0f,       1.0f, 0.0f,
+
+        -1.0f,  1.0f,       0.0f, 1.0f,
+         1.0f, -1.0f,       1.0f, 0.0f,
+         1.0f,  1.0f,       1.0f, 1.0f
+    };
 }
