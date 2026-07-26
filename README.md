@@ -1,21 +1,30 @@
 # OpenGL Project
 
+## building
 to build the project when you are **inside the build** folder
 
+### with Make
 ```shell
 cmake ..
 make
 ```
 
-running from that location
+### with Ninja
+```shell
+cmake .. -G Ninja
+ninja
+```
+
+## running
+also from inside the build folder
 
 ```shell
 ./opengl_project 
 ```
 
-# keybindings
+## keybinds
 
-## movement
+### movement
 `WASD`: standard movement
 - `W`: forward
 - `A`: left
@@ -26,23 +35,31 @@ running from that location
 
 `CTRL`: down
 
-## camera
+### camera
 `1`, `2` & `3`: switch between respectively no effect, Gaussian Blur & Edge Detection
 
 `C`: switch between freeroam camera and the POV of the bee
 
+- default = freeroam
+
 `SCROLL_UP` / `SCROLL_DOWN`: zoom in/out
 
-## functions
-`B`: bloom
+### functions
+`B`: switch bloom on/off
+
+- default = on
 
 `Q`: terminate program
 
-`R`: turn lightpoints on/off
+`R`: switch lightpoints on/off
 
-`T`: switch to another track
+- default = on
+
+`T`: switch to the other track
 
 `O`: switch overlay on/off
+
+- default = off
 
 - `G`: switch chroma key (green screen) on/off
   - default = on
