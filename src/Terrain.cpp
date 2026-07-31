@@ -6,93 +6,118 @@
 #include <algorithm>
 #include <iostream>
 
-// Bovenkant van een blok — altijd tekenen
+/**
+ * @brief geometrie voor de bovenkant
+ * 
+ * @param out vector met vertexdata
+ * @param cx X coord centrum
+ * @param cy Y coord centrum
+ * @param cz Z coord centrum
+ */
 static void appendTopFace(std::vector<float>& out, float cx, float cy, float cz) {
-    const float h = 0.5f;
-    float face[] = {
-        cx-h, cy+h, cz-h, 0,1,0, 0,0,
-        cx+h, cy+h, cz-h, 0,1,0, 1,0,
-        cx+h, cy+h, cz+h, 0,1,0, 1,1,
+    constexpr float h = 0.5f;
+    const float face[] = {
+        cx-h, cy+h, cz-h,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+        cx+h, cy+h, cz-h,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+        cx+h, cy+h, cz+h,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
 
-        cx-h, cy+h, cz-h, 0,1,0, 0,0,
-        cx+h, cy+h, cz+h, 0,1,0, 1,1,
-        cx-h, cy+h, cz+h, 0,1,0, 0,1,
+        cx-h, cy+h, cz-h,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+        cx+h, cy+h, cz+h,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+        cx-h, cy+h, cz+h,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
     };
-    for (float f : face) out.push_back(f);
+    out.insert(out.end(), std::begin(face), std::end(face));
 }
 
-// Zijkant richting +X (rechts)
+/**
+ * @brief zijkant richting +X (rechts)
+ */
 static void appendFacePX(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
-    const float h = 0.5f;
-    float top = cy + h;
-    float bottom = neighborY + h;
-    float face[] = {
-        cx+h, top, cz+h, 1,0,0, 0,0,
-        cx+h, top, cz-h, 1,0,0, 1,0,
-        cx+h, bottom, cz-h, 1,0,0, 1,1,
+    constexpr float h = 0.5f;
+    const float top = cy + h;
+    const float bottom = neighborY + h;
+    const float face[] = {
+        cx+h, top,    cz+h,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        cx+h, top,    cz-h,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        cx+h, bottom, cz-h,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
 
-        cx+h, top, cz+h, 1,0,0, 0,0,
-        cx+h, bottom, cz-h, 1,0,0, 1,1,
-        cx+h, bottom, cz+h, 1,0,0, 0,1,
+        cx+h, top,    cz+h,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        cx+h, bottom, cz-h,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        cx+h, bottom, cz+h,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
     };
-    for (float f : face) out.push_back(f);
+    out.insert(out.end(), std::begin(face), std::end(face));
 }
 
-// Zijkant richting -X (links)
+/**
+ * @brief zijkant richting -X (links)
+ */
 static void appendFaceNX(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
-    const float h = 0.5f;
-    float top = cy + h;
-    float bottom = neighborY + h;
-    float face[] = {
-        cx-h, top, cz-h, -1,0,0, 0,0,
-        cx-h, top, cz+h, -1,0,0, 1,0,
-        cx-h, bottom, cz+h, -1,0,0, 1,1,
+    constexpr float h = 0.5f;
+    const float top = cy + h;
+    const float bottom = neighborY + h;
+    const float face[] = {
+        cx-h, top,    cz-h, -1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        cx-h, top,    cz+h, -1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        cx-h, bottom, cz+h, -1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
 
-        cx-h, top, cz-h, -1,0,0, 0,0,
-        cx-h, bottom, cz+h, -1,0,0, 1,1,
-        cx-h, bottom, cz-h, -1,0,0, 0,1,
+        cx-h, top,    cz-h, -1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        cx-h, bottom, cz+h, -1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        cx-h, bottom, cz-h, -1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
     };
-    for (float f : face) out.push_back(f);
+    out.insert(out.end(), std::begin(face), std::end(face));
 }
 
-// Zijkant richting +Z (voor)
+/**
+ * @brief zijkant richting +Z (voor)
+ */
 static void appendFacePZ(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
-    const float h = 0.5f;
-    float top = cy + h;
-    float bottom = neighborY + h;
-    float face[] = {
-        cx-h, top, cz+h, 0,0,1, 0,0,
-        cx+h, top, cz+h, 0,0,1, 1,0,
-        cx+h, bottom, cz+h, 0,0,1, 1,1,
+    constexpr float h = 0.5f;
+    const float top = cy + h;
+    const float bottom = neighborY + h;
+    const float face[] = {
+        cx-h, top,    cz+h,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
+        cx+h, top,    cz+h,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+        cx+h, bottom, cz+h,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
 
-        cx-h, top, cz+h, 0,0,1, 0,0,
-        cx+h, bottom, cz+h, 0,0,1, 1,1,
-        cx-h, bottom, cz+h, 0,0,1, 0,1,
+        cx-h, top,    cz+h,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
+        cx+h, bottom, cz+h,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
+        cx-h, bottom, cz+h,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
     };
-    for (float f : face) out.push_back(f);
+    out.insert(out.end(), std::begin(face), std::end(face));
 }
 
-// Zijkant richting -Z (achter)
+/**
+ * @brief zijkant richting -Z (achter)
+ */
 static void appendFaceNZ(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
-    const float h = 0.5f;
-    float top = cy + h;
-    float bottom = neighborY + h;
-    float face[] = {
-        cx+h, top, cz-h, 0,0,-1, 0,0,
-        cx-h, top, cz-h, 0,0,-1, 1,0,
-        cx-h, bottom, cz-h, 0,0,-1, 1,1,
+    constexpr float h = 0.5f;
+    const float top = cy + h;
+    const float bottom = neighborY + h;
+    const float face[] = {
+        cx+h, top,    cz-h,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
+        cx-h, top,    cz-h,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
+        cx-h, bottom, cz-h,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
 
-        cx+h, top, cz-h, 0,0,-1, 0,0,
-        cx-h, bottom, cz-h, 0,0,-1, 1,1,
-        cx+h, bottom, cz-h, 0,0,-1, 0,1,
+        cx+h, top,    cz-h,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
+        cx-h, bottom, cz-h,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
+        cx+h, bottom, cz-h,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
     };
-    for (float f : face) out.push_back(f);
+    out.insert(out.end(), std::begin(face), std::end(face));
 }
 
+/**
+ * @brief constructor
+ * 
+ * call generate() to build terrain geometry
+ */
 Terrain::Terrain() {
     generate();
 }
 
+/**
+ * @brief destructor
+ * 
+ * clear allocated OpenGL buffers
+ */
 Terrain::~Terrain() {
     if (vertexCount > 0) {
         glDeleteVertexArrays(1, &VAO);
@@ -100,32 +125,39 @@ Terrain::~Terrain() {
     }
 }
 
+/**
+ * @brief generates geometry of terrain
+ * 
+ * build heightmap, sinus voor hills, plat voor de rest
+ * enkel zichtbare bovenvlakken en zijkanten
+ * naar VBO op GPU
+ */
 void Terrain::generate() {
-    const int gx0 = -65, gx1 = 65;
-    const int gz0 = -80, gz1 = 40;
-    const float blockScale = 0.50f;
+    constexpr int gx0 = -65, gx1 = 65;
+    constexpr int gz0 = -80, gz1 = 40;
+    constexpr float blockScale = 0.50f;
 
-    const float villageX0 = -20.0f, villageX1 = 20.0f;
-    const float villageZ0 = -25.5f, villageZ1 =  5.0f;
+    constexpr float villageX0 = -20.0f, villageX1 = 20.0f;
+    constexpr float villageZ0 = -25.5f, villageZ1 =  5.0f;
 
-    int cols = gx1 - gx0 + 1;
-    int rows = gz1 - gz0 + 1;
+    const int cols = gx1 - gx0 + 1;
+    const int rows = gz1 - gz0 + 1;
 
-    // Bouw eerst een heightmap zodat we buren kunnen opzoeken
+    // 1. Bouw eerst een heightmap zodat we buren kunnen opzoeken
     std::vector<float> heightMap(cols * rows);
 
     for (int gx = gx0; gx <= gx1; ++gx) {
         for (int gz = gz0; gz <= gz1; ++gz) {
-            float wx = gx * blockScale;
-            float wz = gz * blockScale;
+            const float wx = gx * blockScale;
+            const float wz = gz * blockScale;
 
-            bool insideVillage = (wx >= villageX0 && wx <= villageX1 && wz >= villageZ0 && wz <= villageZ1);
+            const bool insideVillage = (wx >= villageX0 && wx <= villageX1 && wz >= villageZ0 && wz <= villageZ1);
             int top;
             if (insideVillage) {
                 top = -3;
             } else {
-                float fx = gx * 0.18f;
-                float fz = gz * 0.16f;
+                const float fx = gx * 0.18f;
+                const float fz = gz * 0.16f;
                 float wobble = 1.2f * std::sin(fx) * std::cos(fz) + 0.6f * std::sin(fx * 2.2f + fz * 1.05f);
                 wobble += 0.4f * std::sin(static_cast<float>(gx + gz) * 0.28f);
                 int dh = static_cast<int>(std::round(wobble));
@@ -133,9 +165,9 @@ void Terrain::generate() {
                 top = -3 + dh;
             }
 
-            int col = gx - gx0;
-            int row = gz - gz0;
-            heightMap[col * rows + row] = (float)top * blockScale;
+            const int col = gx - gx0;
+            const int row = gz - gz0;
+            heightMap[col * rows + row] = static_cast<float>(top) * blockScale;
         }
     }
 
@@ -146,23 +178,23 @@ void Terrain::generate() {
         return heightMap[(gx - gx0) * rows + (gz - gz0)];
     };
 
-    // Genereer geometry — bovenkant altijd, zijkanten alleen bij hoogteverschil
+    // 2. bovenkant altijd, zijkanten alleen bij hoogteverschil
     std::vector<float> groundData;
-    groundData.reserve(cols * rows * 48);
+    groundData.reserve(cols * rows * 6 * 8);
 
     for (int gx = gx0; gx <= gx1; ++gx) {
         for (int gz = gz0; gz <= gz1; ++gz) {
-            float wx = gx * blockScale;
-            float wz = gz * blockScale;
-            float cy = getHeight(gx, gz);
+            const float wx = gx * blockScale;
+            const float wz = gz * blockScale;
+            const float cy = getHeight(gx, gz);
 
             appendTopFace(groundData, wx, cy, wz);
 
             // Teken een zijkant alleen als de buur lager is
-            float hPX = getHeight(gx + 1, gz);
-            float hNX = getHeight(gx - 1, gz);
-            float hPZ = getHeight(gx, gz + 1);
-            float hNZ = getHeight(gx, gz - 1);
+            const float hPX = getHeight(gx + 1, gz);
+            const float hNX = getHeight(gx - 1, gz);
+            const float hPZ = getHeight(gx, gz + 1);
+            const float hNZ = getHeight(gx, gz - 1);
 
             if (hPX < cy) appendFacePX(groundData, wx, cy, wz, hPX);
             if (hNX < cy) appendFaceNX(groundData, wx, cy, wz, hNX);
@@ -174,6 +206,7 @@ void Terrain::generate() {
     vertexCount = static_cast<unsigned int>(groundData.size() / 8);
     if (vertexCount == 0) return;
 
+    // 3. data naar GPU
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
@@ -181,18 +214,25 @@ void Terrain::generate() {
     glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(groundData.size() * sizeof(float)), groundData.data(), GL_STATIC_DRAW);
 
     // Positie
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), static_cast<void*>(0));
     glEnableVertexAttribArray(0);
+
     // Normaal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
     // Texcoords
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
 }
 
+/**
+ * @brief render terrein op scherm
+ * 
+ * @param shader LightingShader voor materiaal en schaduwen
+ */
 void Terrain::Draw(Shader& shader) {
     if (vertexCount == 0) return;
 
