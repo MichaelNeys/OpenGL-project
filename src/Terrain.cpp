@@ -7,101 +7,38 @@
 #include <iostream>
 
 /**
- * @brief geometrie voor de bovenkant
+ * @brief toevoegen zijde
  * 
  * @param out vector met vertexdata
- * @param cx X coord centrum
- * @param cy Y coord centrum
- * @param cz Z coord centrum
+ * @param cx X pos centrum
+ * @param cy Y pos centrum
+ * @param cz Z pos centrum
+ * @param neighborY hoogte buur
+ * @param dir righting face
  */
-static void appendTopFace(std::vector<float>& out, float cx, float cy, float cz) {
-    constexpr float h = 0.5f;
-    const float face[] = {
-        cx-h, cy+h, cz-h,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
-        cx+h, cy+h, cz-h,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
-        cx+h, cy+h, cz+h,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
-
-        cx-h, cy+h, cz-h,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
-        cx+h, cy+h, cz+h,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
-        cx-h, cy+h, cz+h,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-    };
-    out.insert(out.end(), std::begin(face), std::end(face));
-}
-
-/**
- * @brief zijkant richting +X (rechts)
- */
-static void appendFacePX(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
+static void appendFace(std::vector<float>& out, float cx, float cy, float cz, float neighborY, Geometry::FaceDirection dir) {
     constexpr float h = 0.5f;
     const float top = cy + h;
-    const float bottom = neighborY + h;
-    const float face[] = {
-        cx+h, top,    cz+h,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-        cx+h, top,    cz-h,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
-        cx+h, bottom, cz-h,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+    const float bottom = (dir == Geometry::FACE_TOP) ? top : (neighborY + h);
+    const auto& faceData = Geometry::blockFaces[dir];
 
-        cx+h, top,    cz+h,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-        cx+h, bottom, cz-h,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
-        cx+h, bottom, cz+h,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-    };
-    out.insert(out.end(), std::begin(face), std::end(face));
-}
+    for (const auto& v : faceData.vertices) {
+        float vx = cx + v[0];
+        float vy = (v[3] == 0.0f) ? top : bottom;
+        float vz = cz + v[1];
 
-/**
- * @brief zijkant richting -X (links)
- */
-static void appendFaceNX(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
-    constexpr float h = 0.5f;
-    const float top = cy + h;
-    const float bottom = neighborY + h;
-    const float face[] = {
-        cx-h, top,    cz-h, -1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-        cx-h, top,    cz+h, -1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
-        cx-h, bottom, cz+h, -1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
-
-        cx-h, top,    cz-h, -1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-        cx-h, bottom, cz+h, -1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
-        cx-h, bottom, cz-h, -1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-    };
-    out.insert(out.end(), std::begin(face), std::end(face));
-}
-
-/**
- * @brief zijkant richting +Z (voor)
- */
-static void appendFacePZ(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
-    constexpr float h = 0.5f;
-    const float top = cy + h;
-    const float bottom = neighborY + h;
-    const float face[] = {
-        cx-h, top,    cz+h,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
-        cx+h, top,    cz+h,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
-        cx+h, bottom, cz+h,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
-
-        cx-h, top,    cz+h,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
-        cx+h, bottom, cz+h,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
-        cx-h, bottom, cz+h,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
-    };
-    out.insert(out.end(), std::begin(face), std::end(face));
-}
-
-/**
- * @brief zijkant richting -Z (achter)
- */
-static void appendFaceNZ(std::vector<float>& out, float cx, float cy, float cz, float neighborY) {
-    constexpr float h = 0.5f;
-    const float top = cy + h;
-    const float bottom = neighborY + h;
-    const float face[] = {
-        cx+h, top,    cz-h,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
-        cx-h, top,    cz-h,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
-        cx-h, bottom, cz-h,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
-
-        cx+h, top,    cz-h,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
-        cx-h, bottom, cz-h,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
-        cx+h, bottom, cz-h,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
-    };
-    out.insert(out.end(), std::begin(face), std::end(face));
+        // Positie (3 floats)
+        out.push_back(vx);
+        out.push_back(vy);
+        out.push_back(vz);
+        // Normaal (3 floats)
+        out.push_back(faceData.normal.x);
+        out.push_back(faceData.normal.y);
+        out.push_back(faceData.normal.z);
+        // TexCoords (2 floats)
+        out.push_back(v[2]);
+        out.push_back(v[3]);
+    }
 }
 
 /**
@@ -188,7 +125,7 @@ void Terrain::generate() {
             const float wz = gz * blockScale;
             const float cy = getHeight(gx, gz);
 
-            appendTopFace(groundData, wx, cy, wz);
+            appendFace(groundData, wx, cy, wz, 0.0f, Geometry::FACE_TOP);
 
             // Teken een zijkant alleen als de buur lager is
             const float hPX = getHeight(gx + 1, gz);
@@ -196,10 +133,10 @@ void Terrain::generate() {
             const float hPZ = getHeight(gx, gz + 1);
             const float hNZ = getHeight(gx, gz - 1);
 
-            if (hPX < cy) appendFacePX(groundData, wx, cy, wz, hPX);
-            if (hNX < cy) appendFaceNX(groundData, wx, cy, wz, hNX);
-            if (hPZ < cy) appendFacePZ(groundData, wx, cy, wz, hPZ);
-            if (hNZ < cy) appendFaceNZ(groundData, wx, cy, wz, hNZ);
+            if (hPX < cy) appendFace(groundData, wx, cy, wz, hPX, Geometry::FACE_PX);
+            if (hNX < cy) appendFace(groundData, wx, cy, wz, hNX, Geometry::FACE_NX);
+            if (hPZ < cy) appendFace(groundData, wx, cy, wz, hPZ, Geometry::FACE_PZ);
+            if (hNZ < cy) appendFace(groundData, wx, cy, wz, hNZ, Geometry::FACE_NZ);
         }
     }
 

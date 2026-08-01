@@ -110,4 +110,48 @@ namespace Geometry {
          1.0f, -1.0f,       1.0f, 0.0f,
          1.0f,  1.0f,       1.0f, 1.0f
     };
+
+    // layout van een zijkant face
+    struct BlockFaceData {
+        glm::vec3 normal;
+        // 6 vertices per face: [offX, offZ, u, v]
+        std::array<std::array<float, 4>, 6> vertices;
+    };
+
+    enum FaceDirection { 
+        FACE_PX = 0, 
+        FACE_NX = 1, 
+        FACE_PZ = 2, 
+        FACE_NZ = 3, 
+        FACE_TOP = 4 
+    };
+
+    // vlakken voor terrein
+    inline constexpr BlockFaceData blockFaces[5] = {
+        // 0: +X (Rechts)
+        { glm::vec3(1.0f, 0.0f, 0.0f), {{
+            { 0.5f,  0.5f, 0.0f, 0.0f}, { 0.5f, -0.5f, 1.0f, 0.0f}, { 0.5f, -0.5f, 1.0f, 1.0f},
+            { 0.5f,  0.5f, 0.0f, 0.0f}, { 0.5f, -0.5f, 1.0f, 1.0f}, { 0.5f,  0.5f, 0.0f, 1.0f}
+        }}},
+        // 1: -X (Links)
+        { glm::vec3(-1.0f, 0.0f, 0.0f), {{
+            {-0.5f, -0.5f, 0.0f, 0.0f}, {-0.5f,  0.5f, 1.0f, 0.0f}, {-0.5f,  0.5f, 1.0f, 1.0f},
+            {-0.5f, -0.5f, 0.0f, 0.0f}, {-0.5f,  0.5f, 1.0f, 1.0f}, {-0.5f, -0.5f, 0.0f, 1.0f}
+        }}},
+        // 2: +Z (Voor)
+        { glm::vec3(0.0f, 0.0f, 1.0f), {{
+            {-0.5f,  0.5f, 0.0f, 0.0f}, { 0.5f,  0.5f, 1.0f, 0.0f}, { 0.5f,  0.5f, 1.0f, 1.0f},
+            {-0.5f,  0.5f, 0.0f, 0.0f}, { 0.5f,  0.5f, 1.0f, 1.0f}, {-0.5f,  0.5f, 0.0f, 1.0f}
+        }}},
+        // 3: -Z (Achter)
+        { glm::vec3(0.0f, 0.0f, -1.0f), {{
+            { 0.5f, -0.5f, 0.0f, 0.0f}, {-0.5f, -0.5f, 1.0f, 0.0f}, {-0.5f, -0.5f, 1.0f, 1.0f},
+            { 0.5f, -0.5f, 0.0f, 0.0f}, {-0.5f, -0.5f, 1.0f, 1.0f}, { 0.5f, -0.5f, 0.0f, 1.0f}
+        }}},
+        // 4: TOP (Bovenkant)
+        { glm::vec3(0.0f, 1.0f, 0.0f), {{
+            {-0.5f, -0.5f, 0.0f, 0.0f}, { 0.5f, -0.5f, 1.0f, 0.0f}, { 0.5f,  0.5f, 1.0f, 1.0f},
+            {-0.5f, -0.5f, 0.0f, 0.0f}, { 0.5f,  0.5f, 1.0f, 1.0f}, {-0.5f,  0.5f, 0.0f, 1.0f}
+        }}}
+    };
 }
