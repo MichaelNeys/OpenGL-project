@@ -7,6 +7,7 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{parskip}
+\usepackage{amsmath}
 
 \title{\textbf{Projectverslag Computer Graphics 2025-2026}}
 \author{Neys Michael (2467626)}
@@ -17,58 +18,77 @@
 \maketitle
 
 \section{Inleiding}
-Dit verslag beschrijft de implementatie van het Computer Graphics project voor het academiejaar 2025-2026. In onze applicatie hebben we een 3D-omgeving gebouwd met OpenGL (via GLFW en GLAD) waarin een bij (bee) over een traject van Bézier-curves vliegt. Dit verslag geeft een overzicht van de geïmplementeerde functionaliteiten en de gevolgde planning.
+Dit verslag beschrijft de implementatie van het Computer Graphics project voor het academiejaar 2025-2026. In onze applicatie hebben we een 3D-omgeving gebouwd met OpenGL (via GLFW en GLAD) waarin een bij (bee) over een traject van samengestelde Bézier-curves vliegt. Dit verslag geeft een gedetailleerd overzicht van de geïmplementeerde functionaliteiten, de gebruikte optimalisatietechnieken en de software-architectuur.
 
 \section{Geïmplementeerde Functionaliteiten}
 
-\subsection{Curve en Animatie}
-Het traject van de bij is opgebouwd uit Bézier-curves aan de hand van 45 hardcoded control points in de \texttt{BezierPath} klasse. Om ervoor te zorgen dat de bij met een constante snelheid beweegt, en niet afhankelijk is van de parameter $t$, is een evaluatie op basis van booglengte geïmplementeerd. Tijdens de initialisatie wordt in de functie \texttt{buildLUT} een Look-Up Table opgesteld die de relatie tussen de parameter $t$ en de afgelegde afstand bijhoudt.
+\subsection{Curve, Animatie en Booglengte-parameterisatie}
+Het traject van de bij is opgebouwd uit samengestelde Cubic Bézier-splines aan de hand van controlepunten die voldoen aan de $(3n + 1)$ voorwaarde in de \texttt{BezierPath} klasse. 
 
-\subsection{Modellen, Textures en Visualisatie}
-Voor de omgeving hebben we gebruikgemaakt van een procedureel gegenereerd voxel-achtig terrein in de \texttt{Terrain} klasse. Er is een station gedefinieerd, omringd door heuvelachtig terrein. We maken gebruik van diffuse textures en fallback kleuren voor de modellen. 
+Om te garanderen dat de bij met een constante snelheid over de curve beweegt, is een booglengte-parameterisatie geïmplementeerd:
+\begin{itemize}
+	\item \textbf{Look-Up Table (LUT):} Tijdens de initialisatie bouwt de functie \texttt{buildLUT} een tabel op die de booglengte koppelt aan de $t$-parameter.
+	\item \textbf{Binaire Zoekopdracht ($\mathcal{O}(\log N)$):} Om de gewenste afstand om te zetten naar de bijbehorende $t$-parameter gebruikt \texttt{getTForDistance} het C++ \texttt{std::lower\_bound} algoritme. Dit reduceert de zoektijd in de LUT van een lineaire $\mathcal{O}(N)$ naar een logaritmische $\mathcal{O}(\log N)$ complexiteit.
+	\item \textbf{Lineaire Interpolatie:} De exacte $t$-waarde tussen twee LUT-ijkpunten wordt via lineaire interpolatie berekend. Dit voorkomt schokkerige bewegingen bij lage LUT-resoluties.
+\end{itemize}
+
+\subsection{Modellen, Terrein en Traject-rendering}
+De 3D-wereld is opgebouwd uit modulaire sub-systemen:
+\begin{itemize}
+	\item \textbf{Voxel Terrein:} Een procedureel gegenereerd hoogte-terrein via de \texttt{Terrain} klasse. 
+	\item \textbf{Skybox:} Een \texttt{Skybox} klasse die 6 cubemap-texturen inlaadt via \texttt{stb\_image}. Tijdens het renderen wordt de translatiematrix uit de View-matrix gestript en wordt de dieptetest ingesteld op \texttt{GL\_LEQUAL} en \texttt{glDepthMask(GL\_FALSE)}, zodat de achtergrond altijd achter alle 3D-objecten blijft liggen.
+	\item \textbf{TrackRenderer \& Pollen:} De \texttt{TrackRenderer} genereert via \textit{Forward Differencing} een visuele groene hulplijn op de GPU. Tevens berekent deze klasse willekeurig verdeelde transformatiematrices voor kleine stuifmeelkorrels langs de route.
+\end{itemize}
 
 \subsection{Camera's}
-Er zijn twee camera-modi geïmplementeerd die gewisseld kunnen worden met de \textbf{`C'-toets}:
+Er zijn twee camera-modi geïmplementeerd die gewisseld kunnen worden met de \textbf{'C'-toets}:
 \begin{itemize}
-    \item Een free-look/fly camera waarmee de hele scène vrij verkend kan worden.
-        \begin{itemize}
-            \item W, A, S, D: Standaard navigatie (vooruit, links, achteruit, rechts).
-            \item Spatiebalk: Verticaal omhoog bewegen.
-            \item Control (Ctrl): Verticaal omlaag bewegen.
-            \item Shift: Versnellen/sprinten in de richting waarin je momenteel beweegt.
-        \end{itemize}
-    \item Een first-person camera die vastgemaakt is aan de bij, waarbij de View-matrix wordt berekend aan de hand van de actuele positie en kijkrichting van de bij op de curve (\texttt{glm::lookAt}).
+	\item \textbf{Free-look/fly camera:} Hiermee kan de hele scène vrij verkend worden.
+	\begin{itemize}
+		\item W, A, S, D: Navigatie (vooruit, links, achteruit, rechts).
+		\item Spatiebalk: Verticaal omhoog bewegen.
+		\item Control (Ctrl): Verticaal omlaag bewegen.
+		\item Shift: Versnellen/sprinten in de richting waarin je momenteel beweegt.
+	\end{itemize}
+	\item \textbf{First-person camera (Bij):} Deze camera is vastgemaakt aan de bij. De View-matrix wordt berekend op basis van de actuele positie op de curve en de richting naar het volgende punt op het traject (\texttt{glm::lookAt}).
 \end{itemize}
 
 \subsection{Belichting}
-De scène maakt gebruik van per-pixel belichting in de \texttt{lighting.frag} shader. Er is een globaal ``maanlicht" (basislicht) en er zijn 18 lantaarns (point lights) door de scène verspreid. De invloed van deze lokale lichtbronnen neemt realistisch af over afstand door middel van attenuatie (constante, lineaire en kwadratische afzwakking). Met de \textbf{`R'-toets} kunnen de Redstone lampen getoggled worden.
+Per-pixel belichting met point lights waarvan de intensiteit afneemt over afstand:
 
-\subsection{Convolutie en Post-processing (Bloom)}
-We hebben een post-processing pipeline opgezet door de scène te renderen naar een Framebuffer Object (FBO). 
 \begin{itemize}
-    \item \textbf{Convolutie:} Via de toetsen \textbf{1, 2 en 3} kan geschakeld worden tussen geen effect, een Gaussian Blur en Edge Detection (Laplaciaan/Sobel).
-    \item \textbf{Bloom:} Om de lantaarns een neon/halo effect te geven, wordt eerst een brightness-extractie uitgevoerd (\texttt{bloom\_bright.frag}). Vervolgens wordt dit resultaat via `ping-pong' framebuffers in meerdere passes (15 keer) geblurred om een zachte gloed te creëren. Tot slot wordt dit gecombineerd met de originele render. Het effect is in- en uit te schakelen met de \textbf{`B'-toets}.
+    \item \textbf{Per-pixel Belichting:} Geïmplementeerd in de fragment shader (\texttt{lighting.frag}); ambient, diffuse en specular. De berekening gebeurt per pixel op basis van de genormaliseerde normaal- en kijkvectoren.
+    \item \textbf{Lokale Lichtbronnen (18 point lights):} Er zijn 18 lichtbronnen langs het parcours en rond het station geplaatst.
+    \item \textbf{Afstandsverzwakking (Attenuation):} De invloed van elke lantaarn neemt realistisch af met de afstand via de formule:
+    \[
+    \text{Attenuation} = \frac{1.0}{\text{constant} + \text{linear} \cdot d + \text{quadratic} \cdot d^2}
+    \]
+    \item \textbf{Lichtbeheer \& Optimalisatie:} De \texttt{LightManager} klasse beheert de uniform-parameters. Om rendering-overhead te vermijden, worden de uniforme namen vooraf gecachet. Met de \textbf{`R'-toets} kunnen de lampen getoggled worden.
 \end{itemize}
 
-\subsection{Interactie}
-Interactie in de applicatie is toegevoegd aan de hand van \textbf{raycasting}. Wanneer de gebruiker de linkermuisknop indrukt, wordt er vanuit het midden van het scherm (vergelijkbaar met een crosshair in een first-person shooter) een straal (ray) in de 3D-wereld geschoten. 
-
-De implementatie hiervan is als volgt opgebouwd:
+\subsection{Convolutie en Post-processing (Bloom)}
+Post-processing wordt toegepast door de scène te renderen naar een Framebuffer Object (FBO):
 \begin{itemize}
-    \item \textbf{Picking FBO \& Shader:} Er wordt gebruikgemaakt van een apart Framebuffer Object (\texttt{pickingFBO}) en een specifieke shader (\texttt{pickingShader}).
-    \item \textbf{Off-screen rendering:} Zodra de gebruiker klikt, worden de interacteerbare objecten (in dit geval de Redstone lampen) naar deze onzichtbare buffer getekend met een unieke, egale kleur (puur rood: RGB 255, 0, 0). De belichting en textures worden hierbij overgeslagen.
-    \item \textbf{Pixel uitlezen:} Vervolgens wordt met de functie \texttt{glReadPixels} de exacte kleurwaarde van de pixel in het midden van het scherm (\texttt{screenWidth / 2, screenHeight / 2}) uitgelezen.
-    \item \textbf{Resultaat:} Als de gelezen kleur overeenkomt met de ingestelde rode kleur, detecteert het programma een `hit'. De status van de lampen (\texttt{redstoneLampsOn}) wordt dan getoggled om ze allemaal tegelijk in of uit te schakelen (texture aan te passen) en de lichtbronnen buiten het station uit te schakelen.
+	\item \textbf{Convolutie:} Via de toetsen \textbf{1, 2 en 3} kan geschakeld worden tussen de standaardweergave, een Gaussian Blur en Edge Detection (Laplaciaan/Sobel).
+	\item \textbf{Bloom:} Lantaarns krijgen een realistisch glow-effect via een brightness-extractie shader (\texttt{bloom\_bright.frag}). Vervolgens wordt deze buffer via 'ping-pong' framebuffers in meerdere passes ge-blurred en samengevoegd met de originele scène. Dit kan getoggled worden via de \textbf{`B'-toets}.
+\end{itemize}
+
+\subsection{GPU Color-based Picking (Interactie)}
+Voor de interactie met objecten is gekozen voor color-based picking (Off-screen Rendering) in plaats van traditionele CPU-raycasting:
+\begin{itemize}
+	\item \textbf{Picking FBO \& Shader:} Er is een dedicated Framebuffer Object (\texttt{pickingFBO}) en een specifieke \texttt{pickingShader}.
+	\item \textbf{Off-screen Rendering:} Bij een muisklik worden de interactieve meshes (zoals de lamp-mesh) off-screen naar de FBO getekend met een unieke identificatiekleur (puur rood: \texttt{RGB(255, 0, 0)}). De belichting en textures worden hierbij overgeslagen.
+	\item \textbf{Pixel Uitlezen (\texttt{glReadPixels}):} De applicatie leest direct de kleurwaarde uit van de enkele pixel in het midden van de buffer (\texttt{screenWidth / 2, screenHeight / 2}).
+	\item \textbf{Hit Detection:} Als de uitgelezen kleur exact overeenkomt met de rode id-kleur (\texttt{pixel[0] == 255}), wordt een succesvolle interactie gedetecteerd. Dit vuurt de \texttt{toggleLamp()} en \texttt{toggleTrack()} functies af.
 \end{itemize}
 
 \subsection{Chroma-keying}
-Voor de implementatie van chroma-keying werd een textured quad toegevoegd aan de scène via de klasse \texttt{BluePlane}. Deze quad bestaat uit twee driehoeken waarop een overlay-afbeelding wordt geprojecteerd met behulp van texture coordinates.
-
-De overlay-textuur wordt ingeladen via \texttt{stb\_image} en doorgestuurd naar een aparte fragment shader (\texttt{bluePlane.frag}). In deze shader wordt chroma-keying toegepast door een vooraf bepaalde achtergrondkleur (blue-screen) te detecteren en transparant te maken via \texttt{discard}. Hierdoor blijven enkel de gewenste delen van de afbeelding zichtbaar bovenop de gerenderde 3D-scène.
-
-Om de afbeelding correct weer te geven zonder vervorming wordt rekening gehouden met de aspect ratio van de originele textuur. De afmetingen van het vlak worden dynamisch aangepast op basis van de breedte- en hoogteverhouding van de geladen afbeelding.
-
-Tijdens het renderen wordt backface culling tijdelijk uitgeschakeld zodat de overlay vanuit beide richtingen correct zichtbaar blijft. De overlay kan bovendien dynamisch geactiveerd of verborgen worden via een boolean uniform in de shader.
+Via de \texttt{ChromaKey} klasse is een textured quad aan de scène toegevoegd:
+\begin{itemize}
+	\item De overlay-textuur wordt ingeladen met \texttt{stb\_image} en gerenderd met de \texttt{chromaKey.frag} shader.
+	\item Chroma-keying detecteert de specifieke groene achtergrondkleur en verwijdert deze met het GLSL \texttt{discard} commando.
+	\item Om beeldvervorming te voorkomen worden de afmetingen van het vlak dynamisch geschaald op basis van de aspect ratio van de afbeelding.
+\end{itemize}
 
 \section{Niet-geïmplementeerde Functionaliteiten}
 Alle basisfunctionaliteiten uit de opgave werden geïmplementeerd.
