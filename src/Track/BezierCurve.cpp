@@ -60,7 +60,7 @@ std::vector<glm::vec3> BezierCurve::getPointsForwardDifferencing(int steps) cons
     glm::vec3 c = -3.0f * m_p0 + 3.0f * m_p1;
     glm::vec3 d = m_p0;
 
-    // Initialiseer de startwaarden en de voorwaartse verschillen (forward differences)
+    // init start- en voorwaartse verschillen
     glm::vec3 p  = d;
     glm::vec3 dp = a * h3 + b * h2 + c * h;
     glm::vec3 d2p = 6.0f * a * h3 + 2.0f * b * h2;
@@ -68,7 +68,7 @@ std::vector<glm::vec3> BezierCurve::getPointsForwardDifferencing(int steps) cons
 
     points.push_back(p);
 
-    // De loop bevat nu ENKEL optellingen (dit is de essentie van forward differencing!)
+    // enkel optellingen
     for (int i = 0; i < steps; i++) {
         p   += dp;
         dp  += d2p;

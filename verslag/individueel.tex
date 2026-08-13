@@ -18,12 +18,16 @@
 \maketitle
 
 \section{Inleiding}
-Dit verslag beschrijft de implementatie van het Computer Graphics project voor het academiejaar 2025-2026. In onze applicatie hebben we een 3D-omgeving gebouwd met OpenGL (via GLFW en GLAD) waarin een bij (bee) over een traject van samengestelde Bézier-curves vliegt. Dit verslag geeft een gedetailleerd overzicht van de geïmplementeerde functionaliteiten, de gebruikte optimalisatietechnieken en de software-architectuur.
+Dit verslag beschrijft de implementatie van het Computer Graphics project voor het academiejaar 2025-2026. In mijn applicatie heb ik een 3D-omgeving gebouwd met OpenGL (via GLFW en GLAD) waarin een bij (bee) over een traject van samengestelde Bézier-curves vliegt. Dit verslag geeft een gedetailleerd overzicht van de geïmplementeerde functionaliteiten.
 
 \section{Geïmplementeerde Functionaliteiten}
 
-\subsection{Curve, Animatie en Booglengte-parameterisatie}
-Het traject van de bij is opgebouwd uit samengestelde Cubic Bézier-splines aan de hand van controlepunten die voldoen aan de $(3n + 1)$ voorwaarde in de \texttt{BezierPath} klasse. 
+Om het programma af te sluiten kunnen we gebruik maken van de \textbf{`Q'-toets}.
+
+\subsection{Curve}
+Het traject van de bij is opgebouwd uit samengestelde Cubic Bézier-splines aan de hand van controlepunten die voldoen aan de $(3n + 1)$ voorwaarde in de \texttt{BezierPath} klasse. Later wordt deze gevisualiseerd met behulp van forward differencing.
+
+\subsection{Animatie en Booglengte-parameterisatie}
 
 Om te garanderen dat de bij met een constante snelheid over de curve beweegt, is een booglengte-parameterisatie geïmplementeerd:
 \begin{itemize}
@@ -32,16 +36,23 @@ Om te garanderen dat de bij met een constante snelheid over de curve beweegt, is
 	\item \textbf{Lineaire Interpolatie:} De exacte $t$-waarde tussen twee LUT-ijkpunten wordt via lineaire interpolatie berekend. Dit voorkomt schokkerige bewegingen bij lage LUT-resoluties.
 \end{itemize}
 
-\subsection{Modellen, Terrein en Traject-rendering}
+\subsection{Modellen, textures \& terrein}
 De 3D-wereld is opgebouwd uit modulaire sub-systemen:
 \begin{itemize}
 	\item \textbf{Voxel Terrein:} Een procedureel gegenereerd hoogte-terrein via de \texttt{Terrain} klasse. 
 	\item \textbf{Skybox:} Een \texttt{Skybox} klasse die 6 cubemap-texturen inlaadt via \texttt{stb\_image}. Tijdens het renderen wordt de translatiematrix uit de View-matrix gestript en wordt de dieptetest ingesteld op \texttt{GL\_LEQUAL} en \texttt{glDepthMask(GL\_FALSE)}, zodat de achtergrond altijd achter alle 3D-objecten blijft liggen.
-	\item \textbf{TrackRenderer \& Pollen:} De \texttt{TrackRenderer} genereert via \textit{Forward Differencing} een visuele groene hulplijn op de GPU. Tevens berekent deze klasse willekeurig verdeelde transformatiematrices voor kleine stuifmeelkorrels langs de route.
+	\item \textbf{3D-modellen:} Er wordt een statische `Minecraft village / station' en een `Minecraft Bee' (bij) ingeladen uit 2 aparte glb bestanden die ook meteen de textures bevatten. De bij volgt de Bézier curve aan een constante snelheid.
+\end{itemize}	
+
+\subsection{Visualisatie}
+Om te wisselen naar het secundaire traject kunnen we gebruik maken van de \textbf{`T'-toets} of onze picking interactie uitvoeren dat ook de track verandert naar het andere spoor.
+
+\begin{itemize}
+	\item \textbf{TrackRenderer \& Pollen:} De \texttt{TrackRenderer} genereert via Forward Differencing een visuele groene hulplijn op de GPU. Deze klasse berekent ook de willekeurig verdeelde transformatiematrices voor stuifmeelkorrels langs de route. 
 \end{itemize}
 
 \subsection{Camera's}
-Er zijn twee camera-modi geïmplementeerd die gewisseld kunnen worden met de \textbf{'C'-toets}:
+Er zijn twee camera-modi geïmplementeerd die gewisseld kunnen worden met de \textbf{`C'-toets}:
 \begin{itemize}
 	\item \textbf{Free-look/fly camera:} Hiermee kan de hele scène vrij verkend worden.
 	\begin{itemize}
@@ -52,6 +63,8 @@ Er zijn twee camera-modi geïmplementeerd die gewisseld kunnen worden met de \te
 	\end{itemize}
 	\item \textbf{First-person camera (Bij):} Deze camera is vastgemaakt aan de bij. De View-matrix wordt berekend op basis van de actuele positie op de curve en de richting naar het volgende punt op het traject (\texttt{glm::lookAt}).
 \end{itemize}
+
+Beide camera-modi ondersteunen in- en uitzoomen met respectievelijk `scroll omhoog' en `scroll omlaag'.
 
 \subsection{Belichting}
 Per-pixel belichting met point lights waarvan de intensiteit afneemt over afstand:
@@ -73,64 +86,51 @@ Post-processing wordt toegepast door de scène te renderen naar een Framebuffer 
 	\item \textbf{Bloom:} Lantaarns krijgen een realistisch glow-effect via een brightness-extractie shader (\texttt{bloom\_bright.frag}). Vervolgens wordt deze buffer via 'ping-pong' framebuffers in meerdere passes ge-blurred en samengevoegd met de originele scène. Dit kan getoggled worden via de \textbf{`B'-toets}.
 \end{itemize}
 
-\subsection{GPU Color-based Picking (Interactie)}
-Voor de interactie met objecten is gekozen voor color-based picking (Off-screen Rendering) in plaats van traditionele CPU-raycasting:
-\begin{itemize}
-	\item \textbf{Picking FBO \& Shader:} Er is een dedicated Framebuffer Object (\texttt{pickingFBO}) en een specifieke \texttt{pickingShader}.
-	\item \textbf{Off-screen Rendering:} Bij een muisklik worden de interactieve meshes (zoals de lamp-mesh) off-screen naar de FBO getekend met een unieke identificatiekleur (puur rood: \texttt{RGB(255, 0, 0)}). De belichting en textures worden hierbij overgeslagen.
-	\item \textbf{Pixel Uitlezen (\texttt{glReadPixels}):} De applicatie leest direct de kleurwaarde uit van de enkele pixel in het midden van de buffer (\texttt{screenWidth / 2, screenHeight / 2}).
-	\item \textbf{Hit Detection:} Als de uitgelezen kleur exact overeenkomt met de rode id-kleur (\texttt{pixel[0] == 255}), wordt een succesvolle interactie gedetecteerd. Dit vuurt de \texttt{toggleLamp()} en \texttt{toggleTrack()} functies af.
-\end{itemize}
-
 \subsection{Chroma-keying}
 Via de \texttt{ChromaKey} klasse is een textured quad aan de scène toegevoegd:
 \begin{itemize}
 	\item De overlay-textuur wordt ingeladen met \texttt{stb\_image} en gerenderd met de \texttt{chromaKey.frag} shader.
 	\item Chroma-keying detecteert de specifieke groene achtergrondkleur en verwijdert deze met het GLSL \texttt{discard} commando.
 	\item Om beeldvervorming te voorkomen worden de afmetingen van het vlak dynamisch geschaald op basis van de aspect ratio van de afbeelding.
+	\item Standaard is staat de chroma-keying aan maar is de overlay in zijn geheel niet aangezet, om de overlay aan of uit te schakelen kunnen we gebruik maken van de \textbf{`O'-toets}. Voor chroma-keying aan of uit te schakelen kunnen we gebruik maken van de \textbf{`G'-toets}.
+\end{itemize}
+
+\subsection{GPU Color-based Picking (Interactie)}
+Voor de interactie met objecten is gekozen voor color-based picking (Off-screen Rendering) in plaats van traditionele raycasting:
+\begin{itemize}
+	\item \textbf{Picking FBO \& Shader:} Er is een dedicated Framebuffer Object (\texttt{pickingFBO}) en een specifieke \texttt{pickingShader}.
+	\item \textbf{Off-screen Rendering:} Bij een muisklik worden de interactieve meshes (zoals de lamp-mesh) off-screen naar de FBO getekend met een unieke identificatiekleur (puur rood: \texttt{RGB(255, 0, 0)}). De belichting en textures worden hierbij overgeslagen.
+	\item \textbf{Pixel Uitlezen (\texttt{glReadPixels}):} De applicatie leest direct de kleurwaarde uit van de enkele pixel in het midden van de buffer (\texttt{screenWidth / 2, screenHeight / 2}).
+	\item \textbf{Hit Detection:} Als de uitgelezen kleur exact overeenkomt met de rode id-kleur (\texttt{pixel[0] == 255}), wordt een succesvolle interactie gedetecteerd. Dit roept de \texttt{toggleLamp()} en \texttt{toggleTrack()} functies aan.
 \end{itemize}
 
 \section{Niet-geïmplementeerde Functionaliteiten}
 Alle basisfunctionaliteiten uit de opgave werden geïmplementeerd.
 
-\section{Planning en Werkverdeling}
-We hebben beide actief meegewerkt aan het project via Git. In de onderstaande tabel wordt de tijdsbesteding (per persoon, per dag/periode en het aantal uren) inzichtelijk gemaakt aan de hand van onze bijgehouden urenregistratie, zoals vereist in de opgave.
+\section{Planning}
+Ik heb verdergewerkt aan het project via Git. In de onderstaande tabel wordt de tijdsbesteding (per dag/periode en het aantal uren) inzichtelijk gemaakt aan de hand van onze bijgehouden urenregistratie, zoals vereist in de opgave. Dit is enkel een indicatie naar het verbeteren van het project en dus niet het volledig maken ervan aangezien we verder mochten werken met de reeds bestaande code dat we in groep mochten maken.
 
 \begin{table}[h!]
 \centering
 \small % Iets kleiner lettertype om alles mooi op de pagina te laten passen
-\begin{tabularx}{\textwidth}{@{} l l l X @{}}
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
 \toprule
-\textbf{Datum} & \textbf{Tijd} & \textbf{Persoon} & \textbf{Taak / Beschrijving} \\
+\textbf{Datum} & \textbf{Tijd} & \textbf{Taak / Beschrijving} \\
 \midrule
-10 april & 2 min & Michael & Werkuren sheet maken \\
-10 april & 10 min & Maximiliaan & Trello opbouwen \\
-14 - 15 april & 10 uur & Maximiliaan & Base template opzetten \\
-14 april & 1.5 uur & Michael & Clean up repo \& GitHub workflows (Linux/Windows) \\
-19 april & 3.5 uur & Michael & Bezier curve wiskunde \& display implementatie \\
-23 - 30 april & 11 uur & Maximiliaan & Texture displaying \\
-3 - 5 mei & 15 uur & Michael & Track door treinstation modelleren/plaatsen \\
-5 mei & 1.5 uur & Michael & Bij de track laten volgen (constante snelheid \& kijkrichting) \\
-5 - 23 mei & 5.5 uur & Michael & Belichting van de lantaarns \\
-6 - 14 mei & 7 uur & Maximiliaan & Terrain toevoegen \\
-6 - 14 mei & 5 uur & Maximiliaan & Skybox toevoegen \\
-10 mei & 1.5 uur & Samen & Call voor overleg \\
-14 mei & 1 uur & Maximiliaan & Meer controls voor free-camera \\
-17 - 23 mei & 15 uur & Maximiliaan & Convolutie algemeen opzetten \& toevoegen \\
-17 - 23 mei & 3 uur & Maximiliaan & Gaussian Blur \\
-17 - 23 mei & 5 uur & Maximiliaan & Laplaciaan kernel \\
-23 - 24 mei & 7 uur & Maximiliaan & Bloom implementatie \\
-23 - 24 mei & 3 uur & Maximiliaan & First-person camera bij \\
-23 - 24 mei & 2 uur & Samen & Verslag schrijven \\
-24 mei & 2.5 uur & Michael & Picking voor interactie (raycasting) \\
-24 mei & 30 min & Michael & Resizing van windows correct afhandelen \\
-24 mei & 15 min & Michael & Cursor popout (mouse capture met ESC) \\
-24 mei & 3 uur & Michael & Opschonen van de code \\
-24 mei & 1 uur & Maximiliaan & Chroma-keying \\
-24 mei & 1 uur & Michael & Windows build werkende krijgen \\
+16 juli & 30 min & Repository schoonmaken en cotrols beter documenteren \\
+17 juli & 10 min & Bestandsstructuur en imports updaten \\
+17 juli & 4 uur & Track updaten zodat we Bézier splines maken ipv 1 ding berekenen \\
+17 juli & 30 min & Secundaire track toevoegen \\
+17 juli & 30 min & Forward differencing toevoegen \\
+22 juli & 1 uur & Gebruik maken van standard descturctors \\
+22 juli & 1 uur & Chroma-keying een overlay met toggles maken \\
+22 juli - 2 augustus & 3 uur & Documentatie \\
+5, 13 augustus & 2 uur & Verslag \\
+13 augustus & 1 uur & Video (opname + editen) \\
 \bottomrule
 \end{tabularx}
-\caption{Overzicht van de daadwerkelijk gevolgde planning, taakverdeling en bestede tijd.}
+\caption{Overzicht van de daadwerkelijk gevolgde planning en bestede tijd.}
 \end{table}
+
 
 \end{document}

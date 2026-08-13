@@ -16,7 +16,7 @@ BezierPath::BezierPath(const std::vector<glm::vec3>& controlPoints) {
         return;
     }
 
-    // Hak de grote lijst met punten op in Cubic Bézier segmenten (elk 4 punten)
+    // lijst in Cubic Bézier segmenten
     for (size_t i = 0; i < controlPoints.size() - 1; i += 3) {
         m_curves.push_back(BezierCurve(
             controlPoints[i],
