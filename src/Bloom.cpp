@@ -51,9 +51,9 @@ Bloom::Bloom(int width, int height) : width(width), height(height) {
     glBindVertexArray(0);
 
     // shaders inladen
-    brightExtractShader = new Shader("../shaders/quad.vert", "../shaders/bloom_bright.frag");
-    blurShader          = new Shader("../shaders/quad.vert", "../shaders/bloom_blur.frag");
-    combineShader       = new Shader("../shaders/quad.vert", "../shaders/bloom_combine.frag");
+    brightExtractShader = new Shader("shaders/quad.vert", "shaders/bloom_bright.frag");
+    blurShader          = new Shader("shaders/quad.vert", "shaders/bloom_blur.frag");
+    combineShader       = new Shader("shaders/quad.vert", "shaders/bloom_combine.frag");
 }
 
 /**

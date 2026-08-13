@@ -20,6 +20,7 @@ CMakeUserPresets.json
 build/
 .vscode/
 */doc/*
+.vs/
 
 
 # LaTeX

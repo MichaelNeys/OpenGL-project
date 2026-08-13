@@ -57,7 +57,7 @@ PostProcessor::PostProcessor(int width, int height)
     glBindVertexArray(0);
 
     // 5. Shader inladen
-    shader = new Shader("../shaders/quad.vert", "../shaders/postprocess.frag");
+    shader = new Shader("shaders/quad.vert", "shaders/postprocess.frag");
 }
 
 /**

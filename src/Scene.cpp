@@ -32,14 +32,14 @@ Scene::Scene()
     m_trackRenderer->updateTrackData(m_currentTrack);
 
     const std::vector<std::string> skyFaces = {
-        "../textures/skybox/front.jpg",
-        "../textures/skybox/back.jpg",
-        "../textures/skybox/up.jpg",
-        "../textures/skybox/down.jpg",
-        "../textures/skybox/right.jpg",
-        "../textures/skybox/left.jpg"
+        "textures/skybox/front.jpg",
+        "textures/skybox/back.jpg",
+        "textures/skybox/up.jpg",
+        "textures/skybox/down.jpg",
+        "textures/skybox/right.jpg",
+        "textures/skybox/left.jpg"
     };
-    skybox = new Skybox(skyFaces, "../shaders/skybox.vert", "../shaders/skybox.frag");
+    skybox = new Skybox(skyFaces, "shaders/skybox.vert", "shaders/skybox.frag");
 
     // transformatie van village
     m_villageMatrix = glm::mat4(1.0f);
